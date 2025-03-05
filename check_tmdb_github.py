@@ -175,53 +175,6 @@ def is_ci_environment():
         if env_value is not None and str(env_value).lower() == expected_value.lower():
             return True
     return False
-    
-
-@retry(tries=3)
-def get_csrf_token(udp):
-    """获取CSRF Token"""
-    try:
-        url = f'https://dnschecker.org/ajax_files/gen_csrf.php?udp={udp}'
-        headers = {
-            'referer': 'https://dnschecker.org/country/cn/','User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0'
-        }
-        
-        response = requests.get(url, headers=headers)
-        if response.status_code == 200:
-            csrf = response.json().get('csrf')
-            print(f"获取到的CSRF Token: {csrf}")
-            return csrf
-        else:
-            print(f"获取CSRF Token失败，HTTP状态码: {response.status_code}")
-            return None
-    except Exception as e:
-        print(f"获取CSRF Token时发生错误: {str(e)}")
-        return None
-
-@retry(tries=3)
-def get_domain_ips(domain, csrf_token, udp, argument):
-    url = f'https://dnschecker.org/ajax_files/api/363/{argument}/{domain}?dns_key=country&dns_value=cn&v=0.36&cd_flag=1&upd={udp}'
-    headers = {'csrftoken': csrf_token, 'referer':'https://dnschecker.org/country/cn/','User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0'}
-    
-    try:
-        response = requests.get(url, headers=headers)
-        if response.status_code == 200:
-            data = response.json()
-            if 'result' in data and 'ips' in data['result']:
-                ips_str = data['result']['ips']
-                if '<br />' in ips_str:
-                    return [ip.strip() for ip in ips_str.split('<br />') if ip.strip()]
-                else:
-                    return [ips_str.strip()] if ips_str.strip() else []
-            else:
-                print(f"获取 {domain} 的IP列表失败：返回数据格式不正确")
-                return []
-        else:
-            print(f"获取 {domain} 的IP列表失败，HTTP状态码: {response.status_code}")
-            return []
-    except Exception as e:
-        print(f"获取 {domain} 的IP列表时发生错误: {str(e)}")
-        return []
 
 def ping_ip(ip, port=80):
     print(f"使用TCP连接测试IP地址的延迟（毫秒）")
@@ -269,6 +222,74 @@ def find_fastest_ip(ips):
         print(f"\n最快的IP是: {fastest_ip}，延迟: {min_latency}ms")
     
     return fastest_ip
+
+def get_csrf_token(udp: float) -> str:
+    """获取 CSRF Token"""
+    url = "https://dnschecker.org/ajax_files/gen_csrf.php"
+    headers = {
+        "referer": "https://dnschecker.org/country/cn/",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0"
+    }
+    params = {"udp": udp}
+
+    response_data = make_dnschecker_request(url, headers, params)
+    csrf_token = response_data.get("csrf")
+    if csrf_token:
+        print(f"获取到的 CSRF Token: {csrf_token}")
+        return csrf_token
+    else:
+        print("无法获取 CSRF Token")
+        return None
+
+def get_domain_ips(domain: str, csrf_token: str, udp: float, record_type: str) -> list:
+    """获取域名的 IPv4 或 IPv6 地址"""
+    url = f"https://dnschecker.org/ajax_files/api/363/{record_type}"
+    headers = {
+        "csrftoken": csrf_token,
+        "referer": "https://dnschecker.org/country/cn/",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0"
+    }
+    params = {
+        "dns_key": "country",
+        "dns_value": "cn",
+        "v": 0.36,
+        "cd_flag": 1,
+        "upd": udp,
+        "domain": domain
+    }
+
+    response_data = make_dnschecker_request(url, headers, params)
+    if "result" in response_data and "ips" in response_data["result"]:
+        ips_str = response_data["result"]["ips"]
+        if "<br />" in ips_str:
+            return [ip.strip() for ip in ips_str.split("<br />") if ip.strip()]
+        else:
+            return [ips_str.strip()] if ips_str.strip() else []
+    else:
+        print(f"获取 {domain} 的 IP 列表失败：返回数据格式不正确")
+        return []
+    
+def make_dnschecker_request(url: str, headers: dict, params: dict = None) -> dict:
+    """通用函数：发送请求到 DNSChecker API"""
+    try:
+        response = requests.get(url, headers=headers, params=params)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            print(f"请求失败，HTTP状态码: {response.status_code}")
+            return {}
+    except Exception as e:
+        print(f"请求时发生错误: {str(e)}")
+        return {}
+        
+# 读取 domains.txt 文件中的域名
+def load_domains_from_file(file_path: str) -> list:
+    if not os.path.exists(file_path):
+        print(f"错误：文件 {file_path} 不存在！")
+        return []
+    with open(file_path, "r", encoding="utf-8") as file:
+        domains = [line.strip() for line in file.readlines() if line.strip()]
+    return domains
 
 def main():
     print("开始检测TMDB相关域名的最快IP...")
@@ -326,4 +347,14 @@ def main():
 
 
 if __name__ == "__main__":
+    # 加载域名列表
+    domains_file_path = os.path.join(os.path.dirname(__file__), "domains.txt")
+    DOMAINS = load_domains_from_file(domains_file_path)
+    if not DOMAINS:
+        print("未加载到任何域名，程序退出。")
+        sys.exit(1)
+
+    print(f"已加载 {len(DOMAINS)} 个域名：")
+    for domain in DOMAINS:
+        print(f"  - {domain}")
     main()
