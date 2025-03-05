@@ -76,9 +76,9 @@ DOMAINS = [
 Tmdb_Host_TEMPLATE = """# Tmdb Hosts Start
 {content}
 # Update time: {update_time}
-# IPv4 Update url: https://raw.githubusercontent.com/cnwikee/CheckTMDB/refs/heads/main/Tmdb_host_ipv4
-# IPv6 Update url: https://raw.githubusercontent.com/cnwikee/CheckTMDB/refs/heads/main/Tmdb_host_ipv6
-# Star me: https://github.com/cnwikee/CheckTMDB
+# IPv4 Update url: https://raw.githubusercontent.com/938134/CheckTMDB/refs/heads/main/Tmdb_host_ipv4
+# IPv6 Update url: https://raw.githubusercontent.com/938134/CheckTMDB/refs/heads/main/Tmdb_host_ipv6
+# Star me: https://github.com/938134/CheckTMDB
 # Tmdb Hosts End\n"""
 
 def write_file(ipv4_hosts_content: str, ipv6_hosts_content: str, update_time: str) -> bool:
