@@ -8,71 +8,6 @@ from datetime import datetime, timezone, timedelta
 from retry import retry
 import socket
 
-DOMAINS = [
-    'tmdb.org',
-    'api.tmdb.org',
-    'files.tmdb.org',
-    'themoviedb.org',
-    'api.themoviedb.org',
-    'www.themoviedb.org',
-    'auth.themoviedb.org',
-    'image.tmdb.org',
-    'images.tmdb.org',
-    'imdb.com',
-    'www.imdb.com',
-    'secure.imdb.com',
-    's.media-imdb.com',
-    'us.dd.imdb.com',
-    'www.imdb.to',
-    'origin-www.imdb.com',
-    'ia.media-imdb.com',
-    'thetvdb.com',
-    'api.thetvdb.com',
-    'ia.media-imdb.com',
-    'f.media-amazon.com',
-    'imdb-video.media-imdb.com',
-    'alive.github.com',
-    'api.github.com',
-    'assets-cdn.github.com',
-    'avatars.githubusercontent.com',
-    'avatars0.githubusercontent.com',
-    'avatars1.githubusercontent.com',
-    'avatars2.githubusercontent.com',
-    'avatars3.githubusercontent.com',
-    'avatars4.githubusercontent.com',
-    'avatars5.githubusercontent.com',
-    'camo.githubusercontent.com',
-    'central.github.com',
-    'cloud.githubusercontent.com',
-    'codeload.github.com',
-    'collector.github.com',
-    'desktop.githubusercontent.com',
-    'favicons.githubusercontent.com',
-    'gist.github.com',
-    'github-cloud.s3.amazonaws.com',
-    'github-com.s3.amazonaws.com',
-    'github-production-release-asset-2e65be.s3.amazonaws.com',
-    'github-production-repository-file-5c1aeb.s3.amazonaws.com',
-    'github-production-user-asset-6210df.s3.amazonaws.com',
-    'github.blog',
-    'github.com',
-    'github.community',
-    'github.githubassets.com',
-    'github.global.ssl.fastly.net',
-    'github.io',
-    'github.map.fastly.net',
-    'githubstatus.com',
-    'live.github.com',
-    'media.githubusercontent.com',
-    'objects.githubusercontent.com',
-    'pipelines.actions.githubusercontent.com',
-    'raw.githubusercontent.com',
-    'user-images.githubusercontent.com',
-    'vscode.dev',
-    'education.github.com',
-    'private-user-images.githubusercontent.com'
-]
-
 Tmdb_Host_TEMPLATE = """# Tmdb Hosts Start
 {content}
 # Update time: {update_time}
@@ -84,17 +19,14 @@ Tmdb_Host_TEMPLATE = """# Tmdb Hosts Start
 def write_file(ipv4_hosts_content: str, ipv6_hosts_content: str, update_time: str) -> bool:
     output_doc_file_path = os.path.join(os.path.dirname(__file__), "README.md")
     template_path = os.path.join(os.path.dirname(__file__), "README_template.md")
-    
     if os.path.exists(output_doc_file_path):
         with open(output_doc_file_path, "r", encoding='utf-8') as old_readme_md:
             old_readme_md_content = old_readme_md.read()            
             if old_readme_md_content:
                 old_ipv4_block = old_readme_md_content.split("```bash")[1].split("```")[0].strip()
                 old_ipv4_hosts = old_ipv4_block.split("# Update time:")[0].strip()
-
                 old_ipv6_block = old_readme_md_content.split("```bash")[2].split("```")[0].strip()
                 old_ipv6_hosts = old_ipv6_block.split("# Update time:")[0].strip()
-                
                 if ipv4_hosts_content != "":
                     new_ipv4_hosts = ipv4_hosts_content.split("# Update time:")[0].strip()
                     if old_ipv4_hosts == new_ipv4_hosts:
@@ -106,7 +38,6 @@ def write_file(ipv4_hosts_content: str, ipv6_hosts_content: str, update_time: st
                 else:
                     print("ipv4_hosts_content is null")
                     w_ipv4_block = old_ipv4_block
-
                 if ipv6_hosts_content != "":
                     new_ipv6_hosts = ipv6_hosts_content.split("# Update time:")[0].strip()
                     if old_ipv6_hosts == new_ipv6_hosts:
@@ -128,8 +59,6 @@ def write_file(ipv4_hosts_content: str, ipv6_hosts_content: str, update_time: st
                 return True
         return False
                
-                
-
 def write_host_file(hosts_content: str, filename: str) -> None:
     output_file_path = os.path.join(os.path.dirname(__file__), "Tmdb_host_" + filename)
     if len(sys.argv) >= 2 and sys.argv[1].upper() == '-G':
@@ -177,51 +106,35 @@ def is_ci_environment():
     return False
 
 def ping_ip(ip, port=80):
-    print(f"使用TCP连接测试IP地址的延迟（毫秒）")
+    """测试单个IP地址的延迟"""
     try:
-        print(f"\n开始 ping {ip}...")
         start_time = time.time()
         with socket.create_connection((ip, port), timeout=2) as sock:
             latency = (time.time() - start_time) * 1000  # 转换为毫秒
-            print(f"IP: {ip} 的平均延迟: {latency}ms")
-            return latency
+            return ip, latency
     except Exception as e:
         print(f"Ping {ip} 时发生错误: {str(e)}")
-        return float('inf')
-    
+        return ip, float('inf')
+
 def find_fastest_ip(ips):
-    """找出延迟最低的IP地址"""
+    """并行测试多个IP地址的延迟，并找出延迟最低的IP"""
     if not ips:
         return None
-    
-    fastest_ip = None
-    min_latency = float('inf')
-    ip_latencies = []  # 存储所有IP及其延迟
-    
-    for ip in ips:
-        ip = ip.strip()
-        if not ip:
-            continue
-            
-        print(f"正在测试 IP: {ip}")
-        latency = ping_ip(ip)
-        ip_latencies.append((ip, latency))
-        print(f"IP: {ip} 延迟: {latency}ms")
-        
-        if latency < min_latency:
-            min_latency = latency
-            fastest_ip = ip
-            
-        sleep(0.5) 
-    
+
+    # 使用线程池并行测试延迟
+    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        futures = [executor.submit(ping_ip, ip) for ip in ips]
+        results = [future.result() for future in concurrent.futures.as_completed(futures)]
+
+    # 找出延迟最低的IP
+    fastest_ip = min(results, key=lambda x: x[1])
     print("\n所有IP延迟情况:")
-    for ip, latency in ip_latencies:
+    for ip, latency in results:
         print(f"IP: {ip} - 延迟: {latency}ms")
-    
+
     if fastest_ip:
-        print(f"\n最快的IP是: {fastest_ip}，延迟: {min_latency}ms")
-    
-    return fastest_ip
+        print(f"\n最快的IP是: {fastest_ip[0]}，延迟: {fastest_ip[1]}ms")
+    return fastest_ip[0]
 
 def get_csrf_token(udp: float) -> str:
     """获取 CSRF Token"""
@@ -231,7 +144,6 @@ def get_csrf_token(udp: float) -> str:
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0"
     }
     params = {"udp": udp}
-
     response_data = make_dnschecker_request(url, headers, params)
     csrf_token = response_data.get("csrf")
     if csrf_token:
@@ -339,10 +251,8 @@ def main():
 
     # 生成更新时间
     update_time = datetime.now(timezone(timedelta(hours=8))).replace(microsecond=0).isoformat()
-    
     ipv4_hosts_content = Tmdb_Host_TEMPLATE.format(content="\n".join(f"{ip:<27} {domain}" for ip, domain in ipv4_results), update_time=update_time) if ipv4_results else ""
     ipv6_hosts_content = Tmdb_Host_TEMPLATE.format(content="\n".join(f"{ip:<50} {domain}" for ip, domain in ipv6_results), update_time=update_time) if ipv6_results else ""
-
     write_file(ipv4_hosts_content, ipv6_hosts_content, update_time)
 
 
