@@ -104,36 +104,31 @@ def is_ci_environment():
         if env_value is not None and str(env_value).lower() == expected_value.lower():
             return True
     return False
-
-def ping_ip(ip, port=80):
-    """测试单个IP地址的延迟"""
+    
+# """异步测试单个 IP 地址的延迟"""
+async def ping_ip(ip, port=80):
     try:
         start_time = time.time()
-        with socket.create_connection((ip, port), timeout=2) as sock:
-            latency = (time.time() - start_time) * 1000  # 转换为毫秒
-            return ip, latency
+        async with aiohttp.ClientSession() as session:
+            async with session.get(f"http://{ip}:{port}", timeout=2) as response:
+                latency = (time.time() - start_time) * 1000  # 转换为毫秒
+                return ip, latency
     except Exception as e:
         print(f"Ping {ip} 时发生错误: {str(e)}")
         return ip, float('inf')
-
-def find_fastest_ip(ips):
-    """并行测试多个IP地址的延迟，并找出延迟最低的IP"""
+        
+# """并发测试多个 IP 地址的延迟，并找出延迟最低的 IP"""
+async def find_fastest_ip(ips):
     if not ips:
         return None
-
-    # 使用线程池并行测试延迟
-    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-        futures = [executor.submit(ping_ip, ip) for ip in ips]
-        results = [future.result() for future in concurrent.futures.as_completed(futures)]
-
-    # 找出延迟最低的IP
+    tasks = [ping_ip(ip) for ip in ips]
+    results = await asyncio.gather(*tasks)
     fastest_ip = min(results, key=lambda x: x[1])
-    print("\n所有IP延迟情况:")
+    print("\n所有 IP 延迟情况:")
     for ip, latency in results:
         print(f"IP: {ip} - 延迟: {latency}ms")
-
     if fastest_ip:
-        print(f"\n最快的IP是: {fastest_ip[0]}，延迟: {fastest_ip[1]}ms")
+        print(f"\n最快的 IP 是: {fastest_ip[0]}，延迟: {fastest_ip[1]}ms")
     return fastest_ip[0]
 
 def get_csrf_token(udp: float) -> str:
@@ -203,7 +198,7 @@ def load_domains_from_file(file_path: str) -> list:
         domains = [line.strip() for line in file.readlines() if line.strip()]
     return domains
 
-def main():
+async def main():
     print("开始检测TMDB相关域名的最快IP...")
     udp = random.random() * 1000 + (int(time.time() * 1000) % 1000)
     # 获取CSRF Token
@@ -263,8 +258,4 @@ if __name__ == "__main__":
     if not DOMAINS:
         print("未加载到任何域名，程序退出。")
         sys.exit(1)
-
-    print(f"已加载 {len(DOMAINS)} 个域名：")
-    for domain in DOMAINS:
-        print(f"  - {domain}")
-    main()
+    asyncio.run(main())
