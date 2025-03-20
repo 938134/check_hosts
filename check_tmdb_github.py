@@ -189,15 +189,6 @@ def make_dnschecker_request(url: str, headers: dict, params: dict = None) -> dic
         print(f"请求时发生错误: {str(e)}")
         return {}
         
-# 读取 domains.txt 文件中的域名
-def load_domains_from_file(file_path: str) -> list:
-    if not os.path.exists(file_path):
-        print(f"错误：文件 {file_path} 不存在！")
-        return []
-    with open(file_path, "r", encoding="utf-8") as file:
-        domains = [line.strip() for line in file.readlines() if line.strip()]
-    return domains
-
 async def main():
     print("开始检测TMDB相关域名的最快IP...")
     udp = random.random() * 1000 + (int(time.time() * 1000) % 1000)
@@ -205,10 +196,8 @@ async def main():
     csrf_token = get_csrf_token(udp)
     if not csrf_token:
         print("无法获取CSRF Token，程序退出")
-        sys.exit(1)
-
+        sys.exit(1) 
     ipv4_ips, ipv6_ips, ipv4_results, ipv6_results = [], [], [], []
-
     for domain in DOMAINS:
         print(f"\n正在处理域名: {domain}")       
         ipv4_ips = get_domain_ips(domain, csrf_token, udp, "A")
@@ -250,10 +239,18 @@ async def main():
     ipv6_hosts_content = Tmdb_Host_TEMPLATE.format(content="\n".join(f"{ip:<50} {domain}" for ip, domain in ipv6_results), update_time=update_time) if ipv6_results else ""
     write_file(ipv4_hosts_content, ipv6_hosts_content, update_time)
 
+# 读取 domains.txt 文件中的域名
+def load_domains_from_file(file_path: str) -> list:
+    if not os.path.exists(file_path):
+        print(f"错误：文件 {file_path} 不存在！")
+        return []
+    with open(file_path, "r", encoding="utf-8") as file:
+        domains = [line.strip() for line in file.readlines() if line.strip()]
+    return domains
 
 if __name__ == "__main__":
     # 加载域名列表
-    domains_file_path = os.path.join(os.path.dirname(__file__), "domains.txt")
+    domains_file_path = "domains.txt"
     DOMAINS = load_domains_from_file(domains_file_path)
     if not DOMAINS:
         print("未加载到任何域名，程序退出。")
