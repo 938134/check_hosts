@@ -70,70 +70,7 @@ def write_host_file(hosts_content: str, filename: str) -> None:
         output_fb.write(hosts_content)
         print("\n~最新TMDB" + filename + "地址已更新~")
 
-def get_github_hosts() -> None:
-    github_hosts_urls = [
-        "https://hosts.gitcdn.top/hosts.txt",
-        "https://raw.githubusercontent.com/521xueweihan/GitHub520/refs/heads/main/hosts",
-        "https://gitlab.com/ineo6/hosts/-/raw/master/next-hosts",
-        "https://raw.githubusercontent.com/ittuann/GitHub-IP-hosts/refs/heads/main/hosts_single"
-    ]
-    all_failed = True
-    for url in github_hosts_urls:
-        try:
-            response = requests.get(url)
-            if response.status_code == 200:
-                github_hosts = response.text
-                all_failed = False
-                break
-            else:
-                print(f"\n从 {url} 获取GitHub hosts失败: HTTP {response.status_code}")
-        except Exception as e:
-            print(f"\n从 {url} 获取GitHub hosts时发生错误: {str(e)}")
-    if all_failed:
-        print("\n获取GitHub hosts失败: 所有Url项目失败！")
-        return
-    else:
-        return github_hosts
-
-def is_ci_environment():
-    ci_environment_vars = {
-        'GITHUB_ACTIONS': 'true',
-        'TRAVIS': 'true',
-        'CIRCLECI': 'true'
-    }
-    for env_var, expected_value in ci_environment_vars.items():
-        env_value = os.getenv(env_var)
-        if env_value is not None and str(env_value).lower() == expected_value.lower():
-            return True
-    return False
-    
-# """异步测试单个 IP 地址的延迟"""
-async def ping_ip(ip, port=80):
-    try:
-        start_time = time.time()
-        async with aiohttp.ClientSession() as session:
-            async with session.get(f"http://{ip}:{port}", timeout=2) as response:
-                latency = (time.time() - start_time) * 1000  # 转换为毫秒
-                return ip, latency
-    except Exception as e:
-        print(f"Ping {ip} 时发生错误: {str(e)}")
-        return ip, float('inf')
-        
-# """并发测试多个 IP 地址的延迟，并找出延迟最低的 IP"""
-async def find_fastest_ip(ips):
-    if not ips:
-        return None
-    tasks = [ping_ip(ip) for ip in ips]
-    results = await asyncio.gather(*tasks)
-    fastest_ip = min(results, key=lambda x: x[1])
-    print("\n所有 IP 延迟情况:")
-    for ip, latency in results:
-        print(f"IP: {ip} - 延迟: {latency}ms")
-    if fastest_ip:
-        print(f"\n最快的 IP 是: {fastest_ip[0]}，延迟: {fastest_ip[1]}ms")
-    return fastest_ip[0]
-
-def get_csrf_token(udp: float) -> str:
+async def get_csrf_token(udp: float) -> str:
     """获取 CSRF Token"""
     url = "https://dnschecker.org/ajax_files/gen_csrf.php"
     headers = {
@@ -141,16 +78,21 @@ def get_csrf_token(udp: float) -> str:
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0"
     }
     params = {"udp": udp}
-    response_data = make_dnschecker_request(url, headers, params)
-    csrf_token = response_data.get("csrf")
-    if csrf_token:
-        print(f"获取到的 CSRF Token: {csrf_token}")
-        return csrf_token
-    else:
-        print("无法获取 CSRF Token")
-        return None
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url, headers=headers, params=params)
+        if response.status_code == 200:
+            csrf_token = response.json().get("csrf")
+            if csrf_token:
+                print(f"获取到的 CSRF Token: {csrf_token}")
+                return csrf_token
+            else:
+                print("无法获取 CSRF Token")
+                return None
+        else:
+            print(f"请求失败，HTTP状态码: {response.status_code}")
+            return None
 
-def get_domain_ips(domain: str, csrf_token: str, udp: float, record_type: str) -> list:
+async def get_domain_ips(domain: str, csrf_token: str, udp: float, record_type: str) -> list:
     """获取域名的 IPv4 或 IPv6 地址"""
     url = f"https://dnschecker.org/ajax_files/api/363/{record_type}"
     headers = {
@@ -166,31 +108,57 @@ def get_domain_ips(domain: str, csrf_token: str, udp: float, record_type: str) -
         "upd": udp,
         "domain": domain
     }
-
-    response_data = make_dnschecker_request(url, headers, params)
-    if "result" in response_data and "ips" in response_data["result"]:
-        ips_str = response_data["result"]["ips"]
-        if "<br />" in ips_str:
-            return [ip.strip() for ip in ips_str.split("<br />") if ip.strip()]
-        else:
-            return [ips_str.strip()] if ips_str.strip() else []
-    else:
-        print(f"获取 {domain} 的 IP 列表失败：返回数据格式不正确")
-        return []
-    
-def make_dnschecker_request(url: str, headers: dict, params: dict = None) -> dict:
-    """通用函数：发送请求到 DNSChecker API"""
-    try:
-        response = requests.get(url, headers=headers, params=params)
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url, headers=headers, params=params)
         if response.status_code == 200:
-            return response.json()
+            response_data = response.json()
+            if "result" in response_data and "ips" in response_data["result"]:
+                ips_str = response_data["result"]["ips"]
+                if "<br />" in ips_str:
+                    return [ip.strip() for ip in ips_str.split("<br />") if ip.strip()]
+                else:
+                    return [ips_str.strip()] if ips_str.strip() else []
+            else:
+                print(f"获取 {domain} 的 IP 列表失败：返回数据格式不正确")
+                return []
         else:
             print(f"请求失败，HTTP状态码: {response.status_code}")
-            return {}
+            return []
+
+async def ping_ip(ip: str, port: int = 80) -> tuple:
+    """异步测试单个 IP 地址的延迟"""
+    try:
+        start_time = time.time()
+        async with httpx.AsyncClient() as client:
+            response = await client.get(f"http://{ip}:{port}", timeout=2)
+            latency = (time.time() - start_time) * 1000  # 转换为毫秒
+            return ip, latency
     except Exception as e:
-        print(f"请求时发生错误: {str(e)}")
-        return {}
-        
+        print(f"Ping {ip} 时发生错误: {str(e)}")
+        return ip, float('inf')
+
+async def find_fastest_ip(ips: list) -> str:
+    """并发测试多个 IP 地址的延迟，并找出延迟最低的 IP"""
+    if not ips:
+        return None
+    tasks = [ping_ip(ip) for ip in ips]
+    results = await asyncio.gather(*tasks)
+    fastest_ip = min(results, key=lambda x: x[1])
+    print("\n所有 IP 延迟情况:")
+    for ip, latency in results:
+        print(f"IP: {ip} - 延迟: {latency}ms")
+    if fastest_ip:
+        print(f"\n最快的 IP 是: {fastest_ip[0]}，延迟: {fastest_ip[1]}ms")
+    return fastest_ip[0]
+
+async def process_domain(domain: str, csrf_token: str, udp: float) -> tuple:
+    """处理单个域名"""
+    ipv4_ips = await get_domain_ips(domain, csrf_token, udp, "A")
+    ipv6_ips = await get_domain_ips(domain, csrf_token, udp, "AAAA")
+    fastest_ipv4 = await find_fastest_ip(ipv4_ips) if ipv4_ips else None
+    fastest_ipv6 = await find_fastest_ip(ipv6_ips) if ipv6_ips else None
+    return domain, fastest_ipv4, fastest_ipv6
+
 async def main():
     print("开始检测TMDB相关域名的最快IP...")
     udp = random.random() * 1000 + (int(time.time() * 1000) % 1000)
