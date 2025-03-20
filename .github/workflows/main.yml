@@ -25,21 +25,21 @@ jobs:
       run: |
         sudo apt update
         sudo apt install --only-upgrade python3-pip
-        if [ -f requirements.txt ]; then sudo pip install -r requirements.txt; fi
+        if [ -f requirements.txt ]; then pip install --upgrade -r requirements.txt; fi
         
     - name: Run Python script
       run: |
-        sudo python check_tmdb_github.py
+        python check_tmdb_github.py
         
     - name: 提交更改
       run: |
          git config --global user.name 'GitHub Action'
          git config --global user.email 'action@github.com'
          git add README.md Tmdb_host_ipv4 Tmdb_host_ipv6
-         git commit -m "Update TMDB IP [action]" || echo "No changes to commit"
+         git commit -m "Update TMDB IP [action]" || true
       continue-on-error: true
 
     - name: Push changes
       env:
-       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: git push origin main
