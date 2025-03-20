@@ -194,67 +194,29 @@ def make_dnschecker_request(url: str, headers: dict, params: dict = None) -> dic
 async def main():
     print("开始检测TMDB相关域名的最快IP...")
     udp = random.random() * 1000 + (int(time.time() * 1000) % 1000)
-    # 获取CSRF Token
-    csrf_token = get_csrf_token(udp)
+    csrf_token = await get_csrf_token(udp)
     if not csrf_token:
         print("无法获取CSRF Token，程序退出")
-        sys.exit(1) 
-    ipv4_ips, ipv6_ips, ipv4_results, ipv6_results = [], [], [], []
-    for domain in DOMAINS:
-        print(f"\n正在处理域名: {domain}")       
-        ipv4_ips = get_domain_ips(domain, csrf_token, udp, "A")
-        ipv6_ips = get_domain_ips(domain, csrf_token, udp, "AAAA")
-
-        if not ipv4_ips and not ipv6_ips:
-            print(f"无法获取 {domain} 的IP列表，跳过该域名")
-            continue
-        
-        # 处理 IPv4 地址
-        if ipv4_ips:
-            fastest_ipv4 = find_fastest_ip(ipv4_ips)
-            if fastest_ipv4:
-                ipv4_results.append([fastest_ipv4, domain])
-                print(f"域名 {domain} 的最快IPv4是: {fastest_ipv4}")
-            else:
-                ipv4_results.append([ipv4_ips[0], domain])
-        
-        # 处理 IPv6 地址
-        if ipv6_ips:
-            fastest_ipv6 = find_fastest_ip(ipv6_ips)
-            if fastest_ipv6:
-                ipv6_results.append([fastest_ipv6, domain])
-                print(f"域名 {domain} 的最快IPv6是: {fastest_ipv6}")
-            else:
-                # 兜底：可能存在无法正确获取 fastest_ipv6 的情况，则将第一个IP赋值
-                ipv6_results.append([ipv6_ips[0], domain])
-        
-        sleep(1)  # 避免请求过于频繁
-    
-    # 保存结果到文件
-    if not ipv4_results and not ipv6_results:
-        print(f"程序出错：未获取任何domain及对应IP，请检查接口~")
         sys.exit(1)
-
-    # 生成更新时间
+    domains_file_path = "domains.txt"
+    if not os.path.exists(domains_file_path):
+        print(f"错误：文件 {domains_file_path} 不存在！")
+        sys.exit(1)
+    with open(domains_file_path, "r", encoding="utf-8") as file:
+        domains = [line.strip() for line in file.readlines() if line.strip()]
+    tasks = [process_domain(domain, csrf_token, udp) for domain in domains]
+    results = await asyncio.gather(*tasks)
+    ipv4_results = []
+    ipv6_results = []
+    for domain, fastest_ipv4, fastest_ipv6 in results:
+        if fastest_ipv4:
+            ipv4_results.append([fastest_ipv4, domain])
+        if fastest_ipv6:
+            ipv6_results.append([fastest_ipv6, domain])
     update_time = datetime.now(timezone(timedelta(hours=8))).replace(microsecond=0).isoformat()
     ipv4_hosts_content = Tmdb_Host_TEMPLATE.format(content="\n".join(f"{ip:<27} {domain}" for ip, domain in ipv4_results), update_time=update_time) if ipv4_results else ""
     ipv6_hosts_content = Tmdb_Host_TEMPLATE.format(content="\n".join(f"{ip:<50} {domain}" for ip, domain in ipv6_results), update_time=update_time) if ipv6_results else ""
-    write_file(ipv4_hosts_content, ipv6_hosts_content, update_time)
-
-# 读取 domains.txt 文件中的域名
-def load_domains_from_file(file_path: str) -> list:
-    if not os.path.exists(file_path):
-        print(f"错误：文件 {file_path} 不存在！")
-        return []
-    with open(file_path, "r", encoding="utf-8") as file:
-        domains = [line.strip() for line in file.readlines() if line.strip()]
-    return domains
+    # 这里可以根据需要将 ipv4_hosts_content 和 ipv6_hosts_content 写入文件
 
 if __name__ == "__main__":
-    # 加载域名列表
-    domains_file_path = "domains.txt"
-    DOMAINS = load_domains_from_file(domains_file_path)
-    if not DOMAINS:
-        print("未加载到任何域名，程序退出。")
-        sys.exit(1)
     asyncio.run(main())
