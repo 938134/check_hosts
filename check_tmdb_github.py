@@ -162,8 +162,11 @@ async def main():
     update_time = datetime.now(timezone(timedelta(hours=8))).replace(microsecond=0).isoformat()
     ipv4_hosts_content = Tmdb_Host_TEMPLATE.format(content="\n".join(f"{ip:<27} {domain}" for ip, domain in ipv4_results), update_time=update_time) if ipv4_results else ""
     ipv6_hosts_content = Tmdb_Host_TEMPLATE.format(content="\n".join(f"{ip:<50} {domain}" for ip, domain in ipv6_results), update_time=update_time) if ipv6_results else ""
-    # 这里可以根据需要将 ipv4_hosts_content 和 ipv6_hosts_content 写入文件
+    # 更新 README.md 文件
     write_file(ipv4_hosts_content, ipv6_hosts_content, update_time)
+    # 更新 github_tmdb_hosts 文件
+    combined_hosts_content = ipv4_hosts_content + "\n" + ipv6_hosts_content
+    write_host_file(combined_hosts_content, "github_tmdb_hosts")
 
 if __name__ == "__main__":
     asyncio.run(main())
