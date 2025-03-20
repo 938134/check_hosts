@@ -1,3 +1,5 @@
+import asyncio  # 导入 asyncio 模块
+import aiohttp  # 确保也导入了 aiohttp，因为代码中使用了 aiohttp.ClientSession
 import requests
 from time import sleep
 import random
@@ -7,7 +9,6 @@ import sys
 from datetime import datetime, timezone, timedelta
 from retry import retry
 import socket
-import asyncio
 
 Tmdb_Host_TEMPLATE = """# Tmdb Hosts Start
 {content}
