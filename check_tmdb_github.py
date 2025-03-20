@@ -13,62 +13,40 @@ import socket
 Tmdb_Host_TEMPLATE = """# Tmdb Hosts Start
 {content}
 # Update time: {update_time}
-# IPv4 Update url: https://raw.githubusercontent.com/938134/CheckTMDB/refs/heads/main/Tmdb_host_ipv4
-# IPv6 Update url: https://raw.githubusercontent.com/938134/CheckTMDB/refs/heads/main/Tmdb_host_ipv6
+# Update url: https://raw.githubusercontent.com/938134/CheckTMDB/refs/heads/main/github_tddmb_hosts
 # Star me: https://github.com/938134/CheckTMDB
 # Tmdb Hosts End\n"""
 
 def write_file(ipv4_hosts_content: str, ipv6_hosts_content: str, update_time: str) -> bool:
-    output_doc_file_path = os.path.join(os.path.dirname(__file__), "README.md")
+    """更新 README.md 文件"""
+    # 读取 README_template.md 模板内容
     template_path = os.path.join(os.path.dirname(__file__), "README_template.md")
-    if os.path.exists(output_doc_file_path):
-        with open(output_doc_file_path, "r", encoding='utf-8') as old_readme_md:
-            old_readme_md_content = old_readme_md.read()            
-            if old_readme_md_content:
-                old_ipv4_block = old_readme_md_content.split("```bash")[1].split("```")[0].strip()
-                old_ipv4_hosts = old_ipv4_block.split("# Update time:")[0].strip()
-                old_ipv6_block = old_readme_md_content.split("```bash")[2].split("```")[0].strip()
-                old_ipv6_hosts = old_ipv6_block.split("# Update time:")[0].strip()
-                if ipv4_hosts_content != "":
-                    new_ipv4_hosts = ipv4_hosts_content.split("# Update time:")[0].strip()
-                    if old_ipv4_hosts == new_ipv4_hosts:
-                        print("ipv4 host not change")
-                        w_ipv4_block = old_ipv4_block
-                    else:
-                        w_ipv4_block = ipv4_hosts_content
-                        write_host_file(ipv4_hosts_content, 'ipv4')
-                else:
-                    print("ipv4_hosts_content is null")
-                    w_ipv4_block = old_ipv4_block
-                if ipv6_hosts_content != "":
-                    new_ipv6_hosts = ipv6_hosts_content.split("# Update time:")[0].strip()
-                    if old_ipv6_hosts == new_ipv6_hosts:
-                        print("ipv6 host not change")
-                        w_ipv6_block = old_ipv6_block
-                    else:
-                        w_ipv6_block = ipv6_hosts_content
-                        write_host_file(ipv6_hosts_content, 'ipv6')
-                else:
-                    print("ipv6_hosts_content is null")
-                    w_ipv6_block = old_ipv6_block
-                
-                with open(template_path, "r", encoding='utf-8') as temp_fb:
-                    template_str = temp_fb.read()
-                    hosts_content = template_str.format(ipv4_hosts_str=w_ipv4_block, ipv6_hosts_str=w_ipv6_block, update_time=update_time)
-
-                    with open(output_doc_file_path, "w", encoding='utf-8') as output_fb:
-                        output_fb.write(hosts_content)
-                return True
+    if not os.path.exists(template_path):
+        print(f"错误：模板文件 {template_path} 不存在！")
         return False
-               
+    with open(template_path, "r", encoding="utf-8") as template_file:
+        template_content = template_file.read()
+    
+    # 替换模板中的占位符
+    updated_content = template_content.format(
+        ipv4_hosts_str=ipv4_hosts_content,
+        ipv6_hosts_str=ipv6_hosts_content,
+        update_time=update_time
+    )
+    
+    # 写入 README.md 文件
+    readme_path = os.path.join(os.path.dirname(__file__), "README.md")
+    with open(readme_path, "w", encoding="utf-8") as readme_file:
+        readme_file.write(updated_content)
+    print("\n~README.md 已更新~")
+    return True
+
 def write_host_file(hosts_content: str, filename: str) -> None:
-    output_file_path = os.path.join(os.path.dirname(__file__), "Tmdb_host_" + filename)
-    if len(sys.argv) >= 2 and sys.argv[1].upper() == '-G':
-        print("\n~追加Github ip~")
-        hosts_content = hosts_content + "\n" + (get_github_hosts() or "")
-    with open(output_file_path, "w", encoding='utf-8') as output_fb:
-        output_fb.write(hosts_content)
-        print("\n~最新TMDB" + filename + "地址已更新~")
+    """将 hosts 内容写入指定文件"""
+    output_file_path = os.path.join(os.path.dirname(__file__), filename)
+    with open(output_file_path, "w", encoding="utf-8") as output_file:
+        output_file.write(hosts_content)
+    print(f"\n~最新TMDB {filename} 地址已更新~")
 
 async def get_csrf_token(udp: float) -> str:
     """获取 CSRF Token"""
@@ -185,6 +163,7 @@ async def main():
     ipv4_hosts_content = Tmdb_Host_TEMPLATE.format(content="\n".join(f"{ip:<27} {domain}" for ip, domain in ipv4_results), update_time=update_time) if ipv4_results else ""
     ipv6_hosts_content = Tmdb_Host_TEMPLATE.format(content="\n".join(f"{ip:<50} {domain}" for ip, domain in ipv6_results), update_time=update_time) if ipv6_results else ""
     # 这里可以根据需要将 ipv4_hosts_content 和 ipv6_hosts_content 写入文件
+    write_file(ipv4_hosts_content, ipv6_hosts_content, update_time)
 
 if __name__ == "__main__":
     asyncio.run(main())
