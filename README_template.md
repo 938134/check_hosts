@@ -73,19 +73,12 @@ GitHub 发行版：https://github.com/oldj/SwitchHosts/releases/latest
 
 - Hosts 类型：`远程`
 - Hosts 标题：任意
-- URL
-    - IPv4：`https://raw.githubusercontent.com/cnwikee/CheckTMDB/refs/heads/main/Tmdb_host_ipv4`
-    - IPv6：`https://raw.githubusercontent.com/cnwikee/CheckTMDB/refs/heads/main/Tmdb_host_ipv6`
+- URL  `https://raw.githubusercontent.com/938134/check_hosts/refs/heads/main/hosts`
 - 自动刷新：`1 小时`
 
 #### 2.2.3 启用 hosts
 
 在左侧边栏启用 hosts，首次使用时软件会自动获取内容。如果无法连接到 GitHub，可以尝试用同样的方法添加 [GitHub520](https://github.com/521xueweihan/GitHub520) hosts。
-
-## 三、参数说明
-
-1. 直接执行`check_tmdb_github.py`脚本，同时查询IPv4及IPv6地址，目录生成`Tmdb_host_ipv4`文件，及`Tmdb_host_ipv6`文件；
-2. 带`-G` 参数执行：`check_tmdb_github.py -G`，会在`Tmdb_host_ipv4`文件，及`Tmdb_host_ipv6`文件中追加 Github IPv4 地址；
 
 ## 其他
 
