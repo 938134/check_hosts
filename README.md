@@ -1,4 +1,4 @@
-# Check_Hosts
+# CheckTMDB
 
 每日自动更新TMDB，themoviedb、thetvdb 国内可正常连接IP，解决DNS污染，供tinyMediaManager(TMM削刮器)、Kodi的刮削器、群晖VideoStation的海报墙、Plex Server的元数据代理、Emby Server元数据下载器、Infuse、Nplayer等正常削刮影片信息。
 
@@ -10,6 +10,10 @@
 
 通过修改本地、路由器 hosts 文件，即可正常削刮影片信息。
 
+## 文件地址
+
+- TMDB IPv4 hosts：`https://raw.githubusercontent.com/cnwikee/CheckTMDB/refs/heads/main/Tmdb_host_ipv4` ，[链接](https://raw.githubusercontent.com/cnwikee/CheckTMDB/refs/heads/main/Tmdb_host_ipv4)
+- TMDB IPv6 hosts：`https://raw.githubusercontent.com/cnwikee/CheckTMDB/refs/heads/main/Tmdb_host_ipv6` ，[链接](https://raw.githubusercontent.com/cnwikee/CheckTMDB/refs/heads/main/Tmdb_host_ipv6)
 
 ## 二、使用方法
 
@@ -18,18 +22,94 @@
 #### 2.1.1 IPv4地址复制下面的内容
 
 ```bash
-
+3.167.192.52                tmdb.org
+3.163.125.75                api.tmdb.org
+3.167.192.70                files.tmdb.org
+3.167.212.33                themoviedb.org
+3.167.212.23                api.themoviedb.org
+3.167.212.111               www.themoviedb.org
+18.154.132.87               auth.themoviedb.org
+143.244.49.177              image.tmdb.org
+143.244.50.213              images.tmdb.org
+52.94.225.248               imdb.com
+18.164.172.55               www.imdb.com
+52.94.237.74                secure.imdb.com
+18.164.172.55               s.media-imdb.com
+52.94.237.74                us.dd.imdb.com
+18.164.172.55               www.imdb.to
+44.215.137.99               origin-www.imdb.com
+52.84.244.143               ia.media-imdb.com
+18.154.130.110              thetvdb.com
+3.167.194.87                api.thetvdb.com
+52.84.244.143               ia.media-imdb.com
+199.232.45.16               f.media-amazon.com
+3.167.212.73                imdb-video.media-imdb.com
+140.82.112.26               alive.github.com
+20.205.243.168              api.github.com
+185.199.111.133             avatars.githubusercontent.com
+185.199.108.133             avatars0.githubusercontent.com
+185.199.111.133             avatars1.githubusercontent.com
+185.199.109.133             avatars2.githubusercontent.com
+185.199.111.133             avatars3.githubusercontent.com
+185.199.110.133             avatars4.githubusercontent.com
+185.199.110.133             avatars5.githubusercontent.com
+185.199.111.133             camo.githubusercontent.com
+140.82.114.21               central.github.com
+185.199.108.133             cloud.githubusercontent.com
+20.205.243.165              codeload.github.com
+140.82.114.21               collector.github.com
+185.199.110.133             desktop.githubusercontent.com
+185.199.109.133             favicons.githubusercontent.com
+20.205.243.166              gist.github.com
+3.5.27.56                   github-cloud.s3.amazonaws.com
+52.217.226.89               github-com.s3.amazonaws.com
+3.5.27.56                   github-production-release-asset-2e65be.s3.amazonaws.com
+3.5.8.211                   github-production-repository-file-5c1aeb.s3.amazonaws.com
+16.15.185.153               github-production-user-asset-6210df.s3.amazonaws.com
+192.0.66.2                  github.blog
+20.205.243.166              github.com
+140.82.113.17               github.community
+185.199.109.154             github.githubassets.com
+151.101.77.194              github.global.ssl.fastly.net
+185.199.108.153             github.io
+185.199.108.133             github.map.fastly.net
+185.199.111.153             githubstatus.com
+140.82.112.26               live.github.com
+185.199.110.133             media.githubusercontent.com
+185.199.111.133             objects.githubusercontent.com
+13.107.42.16                pipelines.actions.githubusercontent.com
+185.199.108.133             raw.githubusercontent.com
+185.199.108.133             user-images.githubusercontent.com
+13.107.246.73               vscode.dev
+140.82.114.21               education.github.com
+185.199.111.133             private-user-images.githubusercontent.com
 ```
 
-该内容会自动定时更新， 数据更新时间：2025-03-21T06:11:09+08:00
+该内容会自动定时更新， 数据更新时间：2025-03-21T20:36:14+08:00
 
 #### 2.1.2 IPv6地址复制下面的内容
 
 ```bash
-
+2600:9000:27e0:c000:10:db24:6940:93a1              tmdb.org
+2600:9000:265c:6a00:10:fb02:4000:93a1              api.tmdb.org
+2600:9000:27e0:f400:5:da10:7440:93a1               files.tmdb.org
+2600:9000:27e3:a600:e:5373:440:93a1                themoviedb.org
+2600:9000:27e3:3400:c:174a:c400:93a1               api.themoviedb.org
+2600:9000:27e3:8200:e:5373:440:93a1                www.themoviedb.org
+2600:9000:24db:a400:16:e4a1:eb00:93a1              auth.themoviedb.org
+2400:52e0:1a01::954:1                              image.tmdb.org
+2400:52e0:1a01::954:1                              images.tmdb.org
+2600:9000:2365:7e00:1d:d7f6:39d4:e6e1              ia.media-imdb.com
+2600:9000:2365:a00:1d:d7f6:39d4:e6e1               ia.media-imdb.com
+2a04:4e42:48::272                                  f.media-amazon.com
+2606:50c0:8001::154                                avatars.githubusercontent.com
+2606:50c0:8002::154                                media.githubusercontent.com
+2620:1ec:21::16                                    pipelines.actions.githubusercontent.com
+2606:50c0:8002::154                                raw.githubusercontent.com
+2606:50c0:8002::154                                user-images.githubusercontent.com
 ```
 
-该内容会自动定时更新， 数据更新时间：2025-03-21T06:11:09+08:00
+该内容会自动定时更新， 数据更新时间：2025-03-21T20:36:14+08:00
 
 > [!NOTE]
 > 由于项目搭建在Github Aciton，延时数据获取于Github Action 虚拟主机网络环境，请自行测试可用性，建议使用本地网络环境自动设置。
@@ -74,12 +154,19 @@ GitHub 发行版：https://github.com/oldj/SwitchHosts/releases/latest
 
 - Hosts 类型：`远程`
 - Hosts 标题：任意
-- URL  `https://raw.githubusercontent.com/938134/check_hosts/refs/heads/main/hosts`
+- URL
+    - IPv4：`https://raw.githubusercontent.com/cnwikee/CheckTMDB/refs/heads/main/Tmdb_host_ipv4`
+    - IPv6：`https://raw.githubusercontent.com/cnwikee/CheckTMDB/refs/heads/main/Tmdb_host_ipv6`
 - 自动刷新：`1 小时`
 
 #### 2.2.3 启用 hosts
 
 在左侧边栏启用 hosts，首次使用时软件会自动获取内容。如果无法连接到 GitHub，可以尝试用同样的方法添加 [GitHub520](https://github.com/521xueweihan/GitHub520) hosts。
+
+## 三、参数说明
+
+1. 直接执行`check_tmdb_github.py`脚本，同时查询IPv4及IPv6地址，目录生成`Tmdb_host_ipv4`文件，及`Tmdb_host_ipv6`文件；
+2. 带`-G` 参数执行：`check_tmdb_github.py -G`，会在`Tmdb_host_ipv4`文件，及`Tmdb_host_ipv6`文件中追加 Github IPv4 地址；
 
 ## 其他
 
