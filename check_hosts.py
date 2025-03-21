@@ -178,7 +178,7 @@ async def main():
         ipv6_content=ipv6_content
     )
     # 更新 README.md 文件
-    write_file(ipv4_hosts_content, ipv6_hosts_content, update_time)
+    write_file(ipv4_content, ipv6_content, update_time)
     write_host_file(combined_hosts_content, "hosts")
 
 if __name__ == "__main__":
