@@ -1,4 +1,4 @@
-# CheckTMDB
+# Check_Hosts
 
 每日自动更新TMDB，themoviedb、thetvdb 国内可正常连接IP，解决DNS污染，供tinyMediaManager(TMM削刮器)、Kodi的刮削器、群晖VideoStation的海报墙、Plex Server的元数据代理、Emby Server元数据下载器、Infuse、Nplayer等正常削刮影片信息。
 
@@ -10,10 +10,6 @@
 
 通过修改本地、路由器 hosts 文件，即可正常削刮影片信息。
 
-## 文件地址
-
-- TMDB IPv4 hosts：`https://raw.githubusercontent.com/cnwikee/CheckTMDB/refs/heads/main/Tmdb_host_ipv4` ，[链接](https://raw.githubusercontent.com/cnwikee/CheckTMDB/refs/heads/main/Tmdb_host_ipv4)
-- TMDB IPv6 hosts：`https://raw.githubusercontent.com/cnwikee/CheckTMDB/refs/heads/main/Tmdb_host_ipv6` ，[链接](https://raw.githubusercontent.com/cnwikee/CheckTMDB/refs/heads/main/Tmdb_host_ipv6)
 
 ## 二、使用方法
 
@@ -78,19 +74,12 @@ GitHub 发行版：https://github.com/oldj/SwitchHosts/releases/latest
 
 - Hosts 类型：`远程`
 - Hosts 标题：任意
-- URL
-    - IPv4：`https://raw.githubusercontent.com/cnwikee/CheckTMDB/refs/heads/main/Tmdb_host_ipv4`
-    - IPv6：`https://raw.githubusercontent.com/cnwikee/CheckTMDB/refs/heads/main/Tmdb_host_ipv6`
+- URL  `https://raw.githubusercontent.com/938134/check_hosts/refs/heads/main/hosts`
 - 自动刷新：`1 小时`
 
 #### 2.2.3 启用 hosts
 
 在左侧边栏启用 hosts，首次使用时软件会自动获取内容。如果无法连接到 GitHub，可以尝试用同样的方法添加 [GitHub520](https://github.com/521xueweihan/GitHub520) hosts。
-
-## 三、参数说明
-
-1. 直接执行`check_tmdb_github.py`脚本，同时查询IPv4及IPv6地址，目录生成`Tmdb_host_ipv4`文件，及`Tmdb_host_ipv6`文件；
-2. 带`-G` 参数执行：`check_tmdb_github.py -G`，会在`Tmdb_host_ipv4`文件，及`Tmdb_host_ipv6`文件中追加 Github IPv4 地址；
 
 ## 其他
 
