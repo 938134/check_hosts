@@ -6,14 +6,15 @@ from datetime import datetime, timezone, timedelta
 import os
 import sys
 
-Hosts_TEMPLATE = """# Generated at: {update_time}
-# Star me: https://github.com/938134/check_hosts
-
+Hosts_TEMPLATE = """
 # IPv4 Hosts
 {ipv4_content}
 
 # IPv6 Hosts
 {ipv6_content}
+
+# Generated at: {update_time}
+# Star me: https://github.com/938134/check_hosts
 """
 
 def write_file(ipv4_hosts_content: str, ipv6_hosts_content: str, update_time: str) -> bool:
