@@ -6,12 +6,12 @@ from datetime import datetime, timezone, timedelta
 import os
 import sys
 
-Tmdb_Host_TEMPLATE = """# Tmdb Hosts Start
+Hosts_TEMPLATE = """# Hosts Start
 {content}
 # Update time: {update_time}
 # Update url: https://raw.githubusercontent.com/938134/CheckTMDB/refs/heads/main/github_tddmb_hosts
-# Star me: https://github.com/938134/CheckTMDB
-# Tmdb Hosts End\n"""
+# Star me: https://gitee.com/spiderfan/check_hosts
+# Hosts End\n"""
 
 def write_file(ipv4_hosts_content: str, ipv6_hosts_content: str, update_time: str) -> bool:
     """更新 README.md 文件"""
@@ -38,22 +38,20 @@ def write_file(ipv4_hosts_content: str, ipv6_hosts_content: str, update_time: st
     return True
 
 def write_host_file(hosts_content: str, filename: str) -> None:
-    """将 hosts 内容写入指定文件"""
-    output_file_path = os.path.join(os.path.dirname(__file__), filename)
-    with open(output_file_path, "w", encoding="utf-8") as output_file:
-        output_file.write(hosts_content)
-    print(f"\n~最新TMDB {filename} 地址已更新~")
+    output_path = os.path.join(os.path.dirname(__file__), filename)
+    with open(output_path, "w", encoding='utf-8') as output_fb:
+        output_fb.write(hosts_content)
+    print(f"\n~最新Hosts {output_path} 地址已更新~")
 
 async def get_csrf_token(udp: float) -> str:
     """获取 CSRF Token"""
-    url = "https://dnschecker.org/ajax_files/gen_csrf.php"
+    url = f'https://dnschecker.org/ajax_files/gen_csrf.php?udp={udp}'
     headers = {
-        "referer": "https://dnschecker.org/country/cn/",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0"
+        'referer': 'https://dnschecker.org/country/cn/',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0'
     }
-    params = {"udp": udp}
     async with httpx.AsyncClient() as client:
-        response = await client.get(url, headers=headers, params=params)
+        response = await client.get(url, headers=headers)
         if response.status_code == 200:
             csrf_token = response.json().get("csrf")
             if csrf_token:
@@ -68,22 +66,14 @@ async def get_csrf_token(udp: float) -> str:
 
 async def get_domain_ips(domain: str, csrf_token: str, udp: float, record_type: str) -> list:
     """获取域名的 IPv4 或 IPv6 地址"""
-    url = f"https://dnschecker.org/ajax_files/api/363/{record_type}"
+    url = f'https://dnschecker.org/ajax_files/api/363/{record_type}/{domain}?dns_key=country&dns_value=cn&v=0.36&cd_flag=1&upd={udp}'
     headers = {
         "csrftoken": csrf_token,
         "referer": "https://dnschecker.org/country/cn/",
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0"
     }
-    params = {
-        "dns_key": "country",
-        "dns_value": "cn",
-        "v": 0.36,
-        "cd_flag": 1,
-        "upd": udp,
-        "domain": domain
-    }
     async with httpx.AsyncClient() as client:
-        response = await client.get(url, headers=headers, params=params)
+        response = await client.get(url, headers=headers)
         if response.status_code == 200:
             response_data = response.json()
             if "result" in response_data and "ips" in response_data["result"]:
@@ -96,9 +86,12 @@ async def get_domain_ips(domain: str, csrf_token: str, udp: float, record_type: 
                 print(f"获取 {domain} 的 IP 列表失败：返回数据格式不正确")
                 return []
         else:
-            print(f"请求失败，HTTP状态码: {response.status_code}")
+            print(f"请求失败，HTTP状态码: {response.status_code}，域名: {domain}")
+            print(f"请求的 URL: {response.url}")
+            print(f"请求的参数: {params}")
+            print(f"响应内容: {response.text}")
             return []
-
+            
 async def ping_ip(ip: str, port: int = 80) -> tuple:
     """异步测试单个 IP 地址的延迟"""
     try:
@@ -127,6 +120,7 @@ async def find_fastest_ip(ips: list) -> str:
 
 async def process_domain(domain: str, csrf_token: str, udp: float) -> tuple:
     """处理单个域名"""
+    print(f"正在处理: {domain}")
     ipv4_ips = await get_domain_ips(domain, csrf_token, udp, "A")
     ipv6_ips = await get_domain_ips(domain, csrf_token, udp, "AAAA")
     fastest_ipv4 = await find_fastest_ip(ipv4_ips) if ipv4_ips else None
@@ -134,20 +128,30 @@ async def process_domain(domain: str, csrf_token: str, udp: float) -> tuple:
     return domain, fastest_ipv4, fastest_ipv6
 
 async def main():
-    print("开始检测TMDB相关域名的最快IP...")
+    print("开始检测相关域名的最快IP...")
     udp = random.random() * 1000 + (int(time.time() * 1000) % 1000)
     csrf_token = await get_csrf_token(udp)
     if not csrf_token:
         print("无法获取CSRF Token，程序退出")
         sys.exit(1)
-    domains_file_path = "domains.txt"
+    # domains_file_path = "domains.txt"
+    domains_file_path  = os.path.join(os.path.dirname(__file__), "domains.txt")
+    print(f"{domains_file_path}")
     if not os.path.exists(domains_file_path):
         print(f"错误：文件 {domains_file_path} 不存在！")
         sys.exit(1)
     with open(domains_file_path, "r", encoding="utf-8") as file:
         domains = [line.strip() for line in file.readlines() if line.strip()]
-    tasks = [process_domain(domain, csrf_token, udp) for domain in domains]
+
+    # 设置最大并发数量
+    max_concurrent_tasks = 5  # 你可以根据需要调整这个值
+    semaphore = asyncio.Semaphore(max_concurrent_tasks)
+    async def process_domain_with_semaphore(domain):
+        async with semaphore:
+            return await process_domain(domain, csrf_token, udp)
+    tasks = [process_domain_with_semaphore(domain) for domain in domains]
     results = await asyncio.gather(*tasks)
+
     ipv4_results = []
     ipv6_results = []
     for domain, fastest_ipv4, fastest_ipv6 in results:
@@ -156,13 +160,21 @@ async def main():
         if fastest_ipv6:
             ipv6_results.append([fastest_ipv6, domain])
     update_time = datetime.now(timezone(timedelta(hours=8))).replace(microsecond=0).isoformat()
-    ipv4_hosts_content = Tmdb_Host_TEMPLATE.format(content="\n".join(f"{ip:<27} {domain}" for ip, domain in ipv4_results), update_time=update_time) if ipv4_results else ""
-    ipv6_hosts_content = Tmdb_Host_TEMPLATE.format(content="\n".join(f"{ip:<50} {domain}" for ip, domain in ipv6_results), update_time=update_time) if ipv6_results else ""
+    ipv4_hosts_content = Hosts_TEMPLATE.format(content="\n".join(f"{ip:<27} {domain}" for ip, domain in ipv4_results), update_time=update_time) if ipv4_results else ""
+    ipv6_hosts_content = Hosts_TEMPLATE.format(content="\n".join(f"{ip:<50} {domain}" for ip, domain in ipv6_results), update_time=update_time) if ipv6_results else ""
     # 更新 README.md 文件
-    write_file(ipv4_hosts_content, ipv6_hosts_content, update_time)
+    # write_file(ipv4_hosts_content, ipv6_hosts_content, update_time)
     # 更新 github_tmdb_hosts 文件
-    combined_hosts_content = ipv4_hosts_content + "\n" + ipv6_hosts_content
-    write_host_file(combined_hosts_content, "github_tmdb_hosts")
+    # 合并内容并写入文件
+    if not ipv4_results and not ipv6_results:
+        print("未获取到任何有效的 IP 地址，不生成 hosts.txt 文件")
+        return
+    combined_hosts_content = (
+        ipv4_hosts_content +
+        "\n\n# IPv6 Hosts\n" +
+        ipv6_hosts_content
+    )
+    write_host_file(combined_hosts_content, "hosts.txt")
 
 if __name__ == "__main__":
     asyncio.run(main())
