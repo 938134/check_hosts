@@ -6,12 +6,17 @@ from datetime import datetime, timezone, timedelta
 import os
 import sys
 
-Hosts_TEMPLATE = """# Hosts Start
-{content}
-# Update time: {update_time}
-# Update url: https://raw.githubusercontent.com/938134/CheckTMDB/refs/heads/main/github_tddmb_hosts
-# Star me: https://gitee.com/spiderfan/check_hosts
-# Hosts End\n"""
+Hosts_TEMPLATE = """# Hosts File
+# Generated at: {update_time}
+# Source: https://raw.githubusercontent.com/938134/CheckTMDB/refs/heads/main/github_tddmb_hosts
+# Star me: https://github.com/938134/CheckTMDB
+
+# IPv4 Hosts
+{ipv4_content}
+
+# IPv6 Hosts
+{ipv6_content}
+"""
 
 def write_file(ipv4_hosts_content: str, ipv6_hosts_content: str, update_time: str) -> bool:
     """更新 README.md 文件"""
@@ -160,20 +165,17 @@ async def main():
         if fastest_ipv6:
             ipv6_results.append([fastest_ipv6, domain])
     update_time = datetime.now(timezone(timedelta(hours=8))).replace(microsecond=0).isoformat()
-    ipv4_hosts_content = Hosts_TEMPLATE.format(content="\n".join(f"{ip:<27} {domain}" for ip, domain in ipv4_results), update_time=update_time) if ipv4_results else ""
-    ipv6_hosts_content = Hosts_TEMPLATE.format(content="\n".join(f"{ip:<50} {domain}" for ip, domain in ipv6_results), update_time=update_time) if ipv6_results else ""
-    # 更新 README.md 文件
-    # write_file(ipv4_hosts_content, ipv6_hosts_content, update_time)
-    # 更新 github_tmdb_hosts 文件
-    # 合并内容并写入文件
-    if not ipv4_results and not ipv6_results:
-        print("未获取到任何有效的 IP 地址，不生成 hosts文件")
-        return
-    combined_hosts_content = (
-        ipv4_hosts_content +
-        "\n\n# IPv6 Hosts\n" +
-        ipv6_hosts_content
+    # 格式化 IPv4 和 IPv6 内容
+    ipv4_content = "\n".join(f"{ip:<27} {domain}" for ip, domain in ipv4_results) if ipv4_results else "# No IPv4 entries"
+    ipv6_content = "\n".join(f"{ip:<50} {domain}" for ip, domain in ipv6_results) if ipv6_results else "# No IPv6 entries"
+    # 使用优化后的模板生成内容
+    combined_hosts_content = Hosts_TEMPLATE.format(
+        update_time=update_time,
+        ipv4_content=ipv4_content,
+        ipv6_content=ipv6_content
     )
+    # 更新 README.md 文件
+    write_file(ipv4_hosts_content, ipv6_hosts_content, update_time)
     write_host_file(combined_hosts_content, "hosts")
 
 if __name__ == "__main__":
