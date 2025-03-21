@@ -26,8 +26,8 @@ jobs:
         sudo apt update
         sudo apt install --only-upgrade python3-pip
         sudo apt install build-essential libssl-dev libffi-dev
-        sudo pip install --upgrade pip wheel
-        if [ -f requirements.txt ]; then sudo pip install --only-binary :all: -r requirements.txt; fi
+        sudo pip install --upgrade pip
+        if [ -f requirements.txt ]; then sudo pip install -r requirements.txt; fi
         
     - name: Run Python script
       run: |
