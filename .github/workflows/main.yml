@@ -25,6 +25,7 @@ jobs:
       run: |
         sudo apt update
         sudo apt install --only-upgrade python3-pip
+        sudo apt install build-essential libssl-dev 
         if [ -f requirements.txt ]; then sudo pip install -r requirements.txt; fi
         
     - name: Run Python script
