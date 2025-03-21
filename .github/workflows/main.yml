@@ -1,4 +1,4 @@
-name: Check TMDB IP
+name: Check Hosts
 
 on:
   workflow_dispatch:
@@ -32,10 +32,10 @@ jobs:
         
     - name: 提交更改
       run: |
-         git config --global user.name 'GitHub Action'
-         git config --global user.email 'action@github.com'
+         git config --global user.name '938134'
+         git config --global user.email '938134@qq.com'
          git add README.md Tmdb_host_ipv4 Tmdb_host_ipv6
-         git commit -m "Update TMDB IP [action]" || true
+         git commit -m "Update Hosts IP [action]" || true
       continue-on-error: true
 
     - name: Push changes
