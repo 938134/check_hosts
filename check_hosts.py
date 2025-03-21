@@ -71,30 +71,33 @@ async def get_csrf_token(udp: float) -> str:
 
 async def get_domain_ips(domain: str, csrf_token: str, udp: float, record_type: str) -> list:
     """获取域名的 IPv4 或 IPv6 地址"""
-    url = f'https://dnschecker.org/ajax_files/api/363/{record_type}/{domain}?dns_key=country&dns_value=cn&v=0.36&cd_flag=1&upd={udp}'
+    url = f"https://dnschecker.org/ajax_files/api/363/{record_type}/{domain}?dns_key=country&dns_value=cn&v=0.36&cd_flag=1&upd={udp}"
     headers = {
         "csrftoken": csrf_token,
         "referer": "https://dnschecker.org/country/cn/",
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0"
     }
-    async with httpx.AsyncClient() as client:
-        response = await client.get(url, headers=headers)
-        if response.status_code == 200:
-            response_data = response.json()
-            if "result" in response_data and "ips" in response_data["result"]:
-                ips_str = response_data["result"]["ips"]
-                if "<br />" in ips_str:
-                    return [ip.strip() for ip in ips_str.split("<br />") if ip.strip()]
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        try:
+            response = await client.get(url, headers=headers)
+            if response.status_code == 200:
+                response_data = response.json()
+                if "result" in response_data and "ips" in response_data["result"]:
+                    ips_str = response_data["result"]["ips"]
+                    if "<br />" in ips_str:
+                        return [ip.strip() for ip in ips_str.split("<br />") if ip.strip()]
+                    else:
+                        return [ips_str.strip()] if ips_str.strip() else []
                 else:
-                    return [ips_str.strip()] if ips_str.strip() else []
+                    print(f"获取 {domain} 的 IP 列表失败：返回数据格式不正确")
+                    return []
             else:
-                print(f"获取 {domain} 的 IP 列表失败：返回数据格式不正确")
+                print(f"请求失败，HTTP状态码: {response.status_code}，域名: {domain}")
+                print(f"请求的 URL: {response.url}")
+                print(f"响应内容: {response.text}")
                 return []
-        else:
-            print(f"请求失败，HTTP状态码: {response.status_code}，域名: {domain}")
-            print(f"请求的 URL: {response.url}")
-            print(f"请求的参数: {params}")
-            print(f"响应内容: {response.text}")
+        except httpx.ReadTimeout:
+            print(f"请求超时，域名: {domain}")
             return []
             
 async def ping_ip(ip: str, port: int = 80) -> tuple:
