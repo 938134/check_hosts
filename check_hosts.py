@@ -6,10 +6,8 @@ from datetime import datetime, timezone, timedelta
 import os
 import sys
 
-Hosts_TEMPLATE = """# Hosts File
-# Generated at: {update_time}
-# Source: https://raw.githubusercontent.com/938134/CheckTMDB/refs/heads/main/github_tddmb_hosts
-# Star me: https://github.com/938134/CheckTMDB
+Hosts_TEMPLATE = """# Generated at: {update_time}
+# Star me: https://github.com/938134/check_hosts
 
 # IPv4 Hosts
 {ipv4_content}
