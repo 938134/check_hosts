@@ -167,14 +167,14 @@ async def main():
     # 更新 github_tmdb_hosts 文件
     # 合并内容并写入文件
     if not ipv4_results and not ipv6_results:
-        print("未获取到任何有效的 IP 地址，不生成 hosts.txt 文件")
+        print("未获取到任何有效的 IP 地址，不生成 hosts文件")
         return
     combined_hosts_content = (
         ipv4_hosts_content +
         "\n\n# IPv6 Hosts\n" +
         ipv6_hosts_content
     )
-    write_host_file(combined_hosts_content, "hosts.txt")
+    write_host_file(combined_hosts_content, "hosts")
 
 if __name__ == "__main__":
     asyncio.run(main())
