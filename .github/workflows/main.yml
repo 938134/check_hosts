@@ -26,16 +26,11 @@ jobs:
         sudo apt update
         sudo apt install --only-upgrade python3-pip
         sudo apt install build-essential libssl-dev libffi-dev
-        # 创建虚拟环境
-        python3 -m venv venv
-        # 激活虚拟环境
-        source venv/bin/activate
-        # 升级 pip
-        pip install --upgrade pip
-        # 设置清华源
-        pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
-        # 安装依赖
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; 
+        python3 -m venv venv  # 创建虚拟环境
+        source venv/bin/activate  # 激活虚拟环境
+        pip install --upgrade pip  # 在虚拟环境中升级pip
+        pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple  # 设置清华源
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         
     - name: Run Python script
       run: |
