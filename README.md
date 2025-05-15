@@ -17,94 +17,94 @@
 #### 2.1.1 IPv4地址复制下面的内容
 
 ```bash
-13.227.74.119               tmdb.org
+13.227.74.25                tmdb.org
 18.238.192.90               api.tmdb.org
-65.8.161.12                 files.tmdb.org
-18.155.202.61               themoviedb.org
+65.8.161.65                 files.tmdb.org
+18.155.202.83               themoviedb.org
 18.244.214.89               api.themoviedb.org
-18.155.202.52               www.themoviedb.org
-18.155.192.35               auth.themoviedb.org
-143.244.49.179              image.tmdb.org
-143.244.49.179              images.tmdb.org
+18.155.202.61               www.themoviedb.org
+18.155.192.98               auth.themoviedb.org
+143.244.50.209              image.tmdb.org
+143.244.50.209              images.tmdb.org
 52.94.228.167               imdb.com
 18.155.182.162              www.imdb.com
-52.94.225.248               secure.imdb.com
+52.94.237.74                secure.imdb.com
 18.155.182.162              s.media-imdb.com
 52.94.228.167               us.dd.imdb.com
 18.155.182.162              www.imdb.to
 98.82.158.179               origin-www.imdb.com
 18.239.201.100              ia.media-imdb.com
-65.8.170.107                thetvdb.com
+3.168.83.87                 thetvdb.com
 3.169.187.86                api.thetvdb.com
 18.239.201.100              ia.media-imdb.com
 199.232.45.16               f.media-amazon.com
-18.238.192.108              imdb-video.media-imdb.com
-140.82.113.25               alive.github.com
+18.238.192.52               imdb-video.media-imdb.com
+140.82.112.25               alive.github.com
 20.205.243.168              api.github.com
-185.199.110.133             avatars.githubusercontent.com
+185.199.108.133             avatars.githubusercontent.com
 185.199.108.133             avatars0.githubusercontent.com
-185.199.108.133             avatars1.githubusercontent.com
-185.199.111.133             avatars2.githubusercontent.com
+185.199.110.133             avatars1.githubusercontent.com
+185.199.110.133             avatars2.githubusercontent.com
 185.199.108.133             avatars3.githubusercontent.com
-185.199.108.133             avatars4.githubusercontent.com
-185.199.108.133             avatars5.githubusercontent.com
+185.199.110.133             avatars4.githubusercontent.com
+185.199.110.133             avatars5.githubusercontent.com
 185.199.110.133             camo.githubusercontent.com
-140.82.112.22               central.github.com
+140.82.114.21               central.github.com
 185.199.110.133             cloud.githubusercontent.com
 20.205.243.165              codeload.github.com
-140.82.112.22               collector.github.com
-185.199.111.133             desktop.githubusercontent.com
-185.199.111.133             favicons.githubusercontent.com
+140.82.114.21               collector.github.com
+185.199.110.133             desktop.githubusercontent.com
+185.199.108.133             favicons.githubusercontent.com
 20.205.243.166              gist.github.com
-52.217.173.233              github-cloud.s3.amazonaws.com
-3.5.3.75                    github-com.s3.amazonaws.com
-16.15.217.159               github-production-release-asset-2e65be.s3.amazonaws.com
-52.217.133.177              github-production-repository-file-5c1aeb.s3.amazonaws.com
-16.182.66.217               github-production-user-asset-6210df.s3.amazonaws.com
+54.231.163.217              github-cloud.s3.amazonaws.com
+52.217.139.185              github-com.s3.amazonaws.com
+52.217.141.73               github-production-release-asset-2e65be.s3.amazonaws.com
+52.216.244.220              github-production-repository-file-5c1aeb.s3.amazonaws.com
+52.217.139.185              github-production-user-asset-6210df.s3.amazonaws.com
 192.0.66.2                  github.blog
 20.205.243.166              github.com
-140.82.112.17               github.community
-185.199.111.154             github.githubassets.com
+140.82.112.18               github.community
+185.199.108.154             github.githubassets.com
 151.101.77.194              github.global.ssl.fastly.net
-185.199.111.153             github.io
+185.199.109.153             github.io
 185.199.110.133             github.map.fastly.net
-185.199.110.153             githubstatus.com
-140.82.113.25               live.github.com
-185.199.111.133             media.githubusercontent.com
-185.199.111.133             objects.githubusercontent.com
+185.199.109.153             githubstatus.com
+140.82.112.25               live.github.com
+185.199.110.133             media.githubusercontent.com
+185.199.110.133             objects.githubusercontent.com
 13.107.42.16                pipelines.actions.githubusercontent.com
 185.199.108.133             raw.githubusercontent.com
-185.199.108.133             user-images.githubusercontent.com
+185.199.109.133             user-images.githubusercontent.com
 13.107.246.73               vscode.dev
-140.82.112.22               education.github.com
+140.82.114.21               education.github.com
 185.199.110.133             private-user-images.githubusercontent.com
 ```
 
-该内容会自动定时更新， 数据更新时间：2025-05-15T21:23:35+08:00
+该内容会自动定时更新， 数据更新时间：2025-05-16T01:09:52+08:00
 
 #### 2.1.2 IPv6地址复制下面的内容
 
 ```bash
-2600:9000:2202:2400:10:db24:6940:93a1              tmdb.org
-2600:9000:25f1:dc00:10:fb02:4000:93a1              api.tmdb.org
-2600:9000:2146:4000:5:da10:7440:93a1               files.tmdb.org
-2600:9000:24bc:1800:e:5373:440:93a1                themoviedb.org
-2600:9000:25f0:a200:c:174a:c400:93a1               api.themoviedb.org
-2600:9000:24bc:8a00:e:5373:440:93a1                www.themoviedb.org
-2600:9000:24bb:fa00:16:e4a1:eb00:93a1              auth.themoviedb.org
-2400:52e0:1a01::999:1                              image.tmdb.org
-2400:52e0:1a01::999:1                              images.tmdb.org
-2600:9000:24bc:8400:1d:d7f6:39d4:e6e1              ia.media-imdb.com
-2600:9000:24bc:1600:1d:d7f6:39d4:e6e1              ia.media-imdb.com
+2600:9000:2202:f200:10:db24:6940:93a1              tmdb.org
+2600:9000:25f1:9800:10:fb02:4000:93a1              api.tmdb.org
+2600:9000:2146:ce00:5:da10:7440:93a1               files.tmdb.org
+2600:9000:24bc:5400:e:5373:440:93a1                themoviedb.org
+2600:9000:25f0:fc00:c:174a:c400:93a1               api.themoviedb.org
+2600:9000:24bc:e200:e:5373:440:93a1                www.themoviedb.org
+2600:9000:24bb:3200:16:e4a1:eb00:93a1              auth.themoviedb.org
+2400:52e0:1a01::907:1                              image.tmdb.org
+2400:52e0:1a01::907:1                              images.tmdb.org
+2600:9000:285b:d200:1d:d7f6:39d4:e6e1              ia.media-imdb.com
+2600:9000:285b:fa00:1d:d7f6:39d4:e6e1              ia.media-imdb.com
 2a04:4e42:48::272                                  f.media-amazon.com
 2606:50c0:8003::154                                avatars.githubusercontent.com
-2606:50c0:8001::154                                media.githubusercontent.com
+2606:50c0:8000::154                                media.githubusercontent.com
 2620:1ec:21::16                                    pipelines.actions.githubusercontent.com
-2606:50c0:8003::154                                raw.githubusercontent.com
-2606:50c0:8003::154                                user-images.githubusercontent.com
+2606:50c0:8001::154                                raw.githubusercontent.com
+2606:50c0:8002::154                                user-images.githubusercontent.com
 ```
 
-该内容会自动定时更新， 数据更新时间：2025-05-15T21:23:35+08:00
+该内容会自动定时更新， 数据更新时间：2025-05-16T01:09:52+08:00
 
 > [!NOTE]
 > 由于项目搭建在Github Aciton，延时数据获取于Github Action 虚拟主机网络环境，请自行测试可用性，建议使用本地网络环境自动设置。
