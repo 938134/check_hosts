@@ -73,7 +73,7 @@ async def get_domain_ips(domain: str, csrf_token: str, udp: float, record_type: 
     url = f"https://dnschecker.org/ajax_files/api/363/{record_type}/{domain}?dns_key=country&dns_value=cn&v=0.36&cd_flag=1&upd={udp}"
     headers = {
         "csrftoken": csrf_token,
-        "referer": "https://dnschecker.org/country/cn/",
+        "referer": "https://dnschecker.org/country/kr/",
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0"
     }
     async with httpx.AsyncClient(timeout=10.0) as client:
