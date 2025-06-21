@@ -7,7 +7,9 @@ api.telegram.org
 qyapi.weixin.qq.com
 frodo.douban.com
 slack.com
+pypi.org
 github.com
+codeload.github.com
 api.github.com
 raw.githubusercontent.com
 image.tmdb.org
