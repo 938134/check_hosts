@@ -51,7 +51,7 @@ async def get_csrf_token(udp: float) -> str:
     """获取 CSRF Token"""
     url = f'https://dnschecker.org/ajax_files/gen_csrf.php?udp={udp}'
     headers = {
-        'referer': 'https://dnschecker.org/country/cn/',
+        'referer': 'https://dnschecker.org/country/kr/',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0'
     }
     async with httpx.AsyncClient() as client:
@@ -70,7 +70,7 @@ async def get_csrf_token(udp: float) -> str:
 
 async def get_domain_ips(domain: str, csrf_token: str, udp: float, record_type: str) -> list:
     """获取域名的 IPv4 或 IPv6 地址"""
-    url = f"https://dnschecker.org/ajax_files/api/363/{record_type}/{domain}?dns_key=country&dns_value=cn&v=0.36&cd_flag=1&upd={udp}"
+    url = f"https://dnschecker.org/ajax_files/api/336/{record_type}/{domain}?dns_key=country&dns_value=kr&v=0.36&cd_flag=1&upd={udp}"
     headers = {
         "csrftoken": csrf_token,
         "referer": "https://dnschecker.org/country/kr/",
