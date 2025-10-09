@@ -1,7 +1,7 @@
 
 # IPv4 Hosts
-3.169.231.119               api.themoviedb.org
-3.167.192.104               api.tmdb.org
+3.169.231.97                api.themoviedb.org
+3.167.192.54                api.tmdb.org
 13.225.117.77               www.themoviedb.org
 3.170.218.86                api.thetvdb.com
 51.89.210.79                webservice.fanart.tv
@@ -13,19 +13,19 @@
 20.200.245.247              github.com
 20.200.245.246              codeload.github.com
 20.200.245.245              api.github.com
-185.199.109.133             raw.githubusercontent.com
-169.150.225.43              image.tmdb.org
-109.61.83.97                images.tmdb.org
+185.199.111.133             raw.githubusercontent.com
+212.102.50.49               image.tmdb.org
+109.61.83.242               images.tmdb.org
 
 # IPv6 Hosts
-2600:9000:2864:8600:c:174a:c400:93a1               api.themoviedb.org
-2600:9000:27e0:3600:10:fb02:4000:93a1              api.tmdb.org
-2600:9000:21d3:9e00:e:5373:440:93a1                www.themoviedb.org
+2600:9000:2864:5e00:c:174a:c400:93a1               api.themoviedb.org
+2600:9000:27e0:aa00:10:fb02:4000:93a1              api.tmdb.org
+2600:9000:21d3:6a00:e:5373:440:93a1                www.themoviedb.org
 2001:67c:4e8:f004::9                               api.telegram.org
 2a04:4e42:400::223                                 pypi.org
-2606:50c0:8002::154                                raw.githubusercontent.com
-2400:52e0:1501::1098:1                             image.tmdb.org
-2400:52e0:1501::1171:1                             images.tmdb.org
+2606:50c0:8000::154                                raw.githubusercontent.com
+2400:52e0:1501::1195:1                             image.tmdb.org
+2400:52e0:1501::1145:1                             images.tmdb.org
 
-# Generated at: 2025-10-09T13:19:43+08:00
+# Generated at: 2025-10-09T14:30:33+08:00
 # Star me: https://github.com/938134/check_hosts
