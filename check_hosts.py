@@ -72,24 +72,47 @@ def write_hosts(hosts_content: str):
     print(f"\n~最新Hosts {hosts_path} 已更新~")
 
 
-# ---------- 重试拿 Token ----------
+# ---------- 修复版：重试拿 Token ----------
 @retry(stop=stop_after_attempt(3), wait=wait_random(min=2, max=4))
 async def get_csrf_token(udp: float, country_path: str):
-    """照搬原逻辑，改为异步 & 修复国家代码"""
-    url = f"https://dnschecker.org/ajax_files/gen_csrf.php?udp={udp}"
+    """修复版：调整referer和URL参数"""
+    # 使用与成功代码相似的URL构造
+    url = f'https://dnschecker.org/ajax_files/gen_csrf.php?udp={udp}'
+    
+    # 修复referer：使用小写国家代码，确保格式正确
     headers = {
-        "referer": f"https://dnschecker.org/country/{country_path}/",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                      "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0",
+        'referer': f'https://dnschecker.org/country/{country_path.lower()}/',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+                      '(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0',
+        'Accept': 'application/json, text/javascript, */*; q=0.01',
+        'X-Requested-With': 'XMLHttpRequest',
     }
-    async with httpx.AsyncClient(timeout=10) as client:
+    
+    print(f"[DEBUG] 请求URL: {url}")
+    print(f"[DEBUG] Referer: {headers['referer']}")
+    
+    async with httpx.AsyncClient(
+        timeout=10,
+        follow_redirects=True
+    ) as client:
         resp = await client.get(url, headers=headers)
         print(f"[get_csrf_token] HTTP {resp.status_code}")
+        
+        if resp.status_code == 403:
+            print("403 Forbidden - 可能是referer或参数问题")
+            # 尝试输出响应内容查看详细信息
+            try:
+                error_content = resp.text
+                print(f"错误响应: {error_content[:200]}...")
+            except:
+                pass
+            raise ValueError("403 Forbidden")
+        
         resp.raise_for_status()
         data = resp.json()
         token = data.get("csrf")
         if token:
-            print(f"获取CSRF Token: {token}")
+            print(f"获取CSRF Token成功: {token}")
             return token
         raise ValueError("token 为空")
 # ------------------------------------------------
@@ -101,7 +124,9 @@ class HostsBuilder:
         if self.country_code not in COUNTRY_MAP:
             print(f"不支持的国家/地区: {country_code}，支持列表: {list(COUNTRY_MAP.keys())}")
             sys.exit(1)
-        self.country_path = COUNTRY_MAP[self.country_code]
+        
+        # 确保country_path是小写，与referer匹配
+        self.country_path = COUNTRY_MAP[self.country_code].lower()  # 添加.lower()
         self.udp = random.random() * 1000 + (int(time.time() * 1000) % 1000)
         self.csrf_token = None
 
@@ -123,6 +148,8 @@ class HostsBuilder:
             "referer": f"https://dnschecker.org/country/{self.country_path}/",
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
                           "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0",
+            "Accept": "application/json, text/javascript, */*; q=0.01",
+            "X-Requested-With": "XMLHttpRequest",
         }
         async with httpx.AsyncClient(timeout=CONFIG["dns_timeout"]) as client:
             try:
