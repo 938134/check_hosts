@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Github Actions 友好 / 多国家线路 / 防 403 版本
-https://github.com/938134/check_hosts
+GitHub Actions 完整可运行版
+- 支持命令行切换国家/地区
+- 使用 Playwright 绕过 Cloudflare JS 挑战获取 CSRF Token
+- 其余逻辑不变：异步 DNS 查询 → 延迟测试 → 生成 hosts
 """
 
 # ======================== 可配置区域 ========================
@@ -27,25 +29,6 @@ COUNTRY_MAP = {
     "US": "us",  # 美国 - 冷备/大带宽廉价
     "DE": "de",  # 德国 - 欧洲备用
 }
-
-# 浏览器特征池（随机取一套，绕过 JA3 指纹）
-HEADERS_POOL = [
-    {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                      "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0",
-        "sec-ch-ua": '"Microsoft Edge";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
-        "sec-ch-ua-mobile": "?0",
-        "sec-ch-ua-platform": '"Windows"',
-        "Accept": "application/json, text/plain, */*",
-        "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-        "Accept-Encoding": "gzip, deflate, br",
-        "DNT": "1",
-        "Connection": "keep-alive",
-        "Sec-Fetch-Dest": "empty",
-        "Sec-Fetch-Mode": "cors",
-        "Sec-Fetch-Site": "same-origin",
-    }
-]
 # ==========================================================
 
 import argparse
@@ -56,6 +39,7 @@ import time
 import os
 import sys
 from datetime import datetime, timezone, timedelta
+from playwright.async_api import async_playwright
 
 HOSTS_TEMPLATE = """# IPv4 Hosts
 {ipv4_content}
@@ -108,41 +92,40 @@ class HostsBuilder:
         self.udp = random.random() * 1000 + (int(time.time() * 1000) % 1000)
         self.csrf_token = None
 
-    async def warm_up_session(self):
-        """先 GET 首页拿 Cookie & 延迟"""
-        url = f"https://dnschecker.org/country/{self.country_path}/"
-        headers = random.choice(HEADERS_POOL).copy()
-        headers["referer"] = "https://dnschecker.org/"
-        async with httpx.AsyncClient(timeout=10) as client:
-            await client.get(url, headers=headers)
-            await asyncio.sleep(random.uniform(1, 2))
-            return client.cookies
-
+    # ✅ Playwright 真浏览器拿 Token
     async def get_csrf_token(self):
-        url = f"https://dnschecker.org/ajax_files/gen_csrf.php?udp={self.udp}"
-        headers = random.choice(HEADERS_POOL).copy()
-        headers["referer"] = f"https://dnschecker.org/country/{self.country_path}/"
-        cookies = await self.warm_up_session()
-        async with httpx.AsyncClient(timeout=10) as client:
-            client.cookies = cookies
-            resp = await client.get(url, headers=headers)
-            if resp.status_code == 200:
-                token = resp.json().get("csrf")
-                if token:
-                    print(f"获取CSRF Token: {token}")
-                    self.csrf_token = token
-                    return token
-            print("无法获取 CSRF Token")
-            return None
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(headless=True)
+            page = await browser.new_page(
+                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                           "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0"
+            )
+            await page.goto(f"https://dnschecker.org/country/{self.country_path}/",
+                            wait_until="networkidle")
+            api_url = f"https://dnschecker.org/ajax_files/gen_csrf.php?udp={self.udp}"
+            resp = await page.request.get(api_url)
+            data = await resp.json()
+            token = data.get("csrf")
+            await browser.close()
+            if token:
+                print(f"获取CSRF Token: {token}")
+                self.csrf_token = token
+                return token
+            else:
+                print("无法获取 CSRF Token")
+                return None
 
     async def fetch_ips(self, domain: str, record_type: str):
         url = (
             f"https://dnschecker.org/ajax_files/api/336/{record_type}/{domain}"
             f"?dns_key=country&dns_value={self.country_path}&v=0.36&cd_flag=1&upd={self.udp}"
         )
-        headers = random.choice(HEADERS_POOL).copy()
-        headers["csrftoken"] = self.csrf_token
-        headers["referer"] = f"https://dnschecker.org/country/{self.country_path}/"
+        headers = {
+            "csrftoken": self.csrf_token,
+            "referer": f"https://dnschecker.org/country/{self.country_path}/",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                          "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0",
+        }
         async with httpx.AsyncClient(timeout=CONFIG["dns_timeout"]) as client:
             try:
                 resp = await client.get(url, headers=headers)
@@ -219,7 +202,7 @@ class HostsBuilder:
 
 # ---------- 入口 ----------
 async def async_main():
-    parser = argparse.ArgumentParser(description="多线路 hosts 自动生成器（GitHub Actions 版）")
+    parser = argparse.ArgumentParser(description="多线路 hosts 自动生成器（Playwright 版）")
     parser.add_argument(
         "-c", "--country", default=CONFIG["default_country"],
         help=f"国家/地区代码，默认: {CONFIG['default_country']}，可选: {list(COUNTRY_MAP.keys())}"
