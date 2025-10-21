@@ -224,12 +224,12 @@ class HostsBuilder:
             else:
                 return ip, float("inf")
 
-    async def find_fastest(self, ips, ip_type="IPv4"):
-        """改进的最快IP查找，支持 IPv6"""
+    async def find_fastest_ipv4(self, ips):
+        """查找最快的 IPv4 地址"""
         if not ips:
             return None
             
-        print(f"\n{ip_type} 延迟测试:")
+        print(f"\nIPv4 延迟测试:")
         tasks = [self.ping_ip(ip) for ip in ips]
         results = await asyncio.gather(*tasks)
         
@@ -237,16 +237,41 @@ class HostsBuilder:
         valid_results = [(ip, latency) for ip, latency in results if latency != float("inf")]
         
         if not valid_results:
-            print(f"  {ip_type} 所有地址均超时")
+            print(f"  IPv4 所有地址均超时")
             return None
             
         fastest = min(valid_results, key=lambda x: x[1])
         
-        print(f"\n{ip_type} 延迟排行:")
+        print(f"\nIPv4 延迟排行:")
         for ip, latency in sorted(valid_results, key=lambda x: x[1]):
-            print(f"  {ip:<50} {latency:>7.2f}ms")
+            print(f"  {ip:<30} {latency:>7.2f}ms")
             
         return fastest[0]
+
+    async def find_best_ipv6(self, ips):
+        """查找最佳的 IPv6 地址（如果测试失败，使用第一个地址）"""
+        if not ips:
+            return None
+            
+        print(f"\nIPv6 连通性测试:")
+        tasks = [self.ping_ip(ip) for ip in ips]
+        results = await asyncio.gather(*tasks)
+        
+        # 过滤掉超时的结果
+        valid_results = [(ip, latency) for ip, latency in results if latency != float("inf")]
+        
+        if valid_results:
+            # 如果有可用的 IPv6 地址，选择最快的
+            fastest = min(valid_results, key=lambda x: x[1])
+            print(f"\nIPv6 延迟排行:")
+            for ip, latency in sorted(valid_results, key=lambda x: x[1]):
+                print(f"  {ip:<50} {latency:>7.2f}ms")
+            return fastest[0]
+        else:
+            # 如果所有 IPv6 地址测试都失败，使用第一个地址
+            # 因为很多 IPv6 地址可能由于防火墙无法 ping 通，但实际访问时可用
+            print(f"  IPv6 延迟测试全部失败，使用第一个地址: {ips[0]}")
+            return ips[0]
 
     async def process_domain(self, domain, semaphore):
         async with semaphore:
@@ -263,11 +288,11 @@ class HostsBuilder:
             print(f"IPv6 结果: {len(ipv6_ips)} 个地址")
             
             # 测试延迟
-            fastest_ipv4 = await self.find_fastest(ipv4_ips, "IPv4") if ipv4_ips else None
-            fastest_ipv6 = await self.find_fastest(ipv6_ips, "IPv6") if ipv6_ips else None
+            fastest_ipv4 = await self.find_fastest_ipv4(ipv4_ips) if ipv4_ips else None
+            fastest_ipv6 = await self.find_best_ipv6(ipv6_ips) if ipv6_ips else None
             
-            print(f"最快 IPv4: {fastest_ipv4}")
-            print(f"最快 IPv6: {fastest_ipv6}")
+            print(f"最佳 IPv4: {fastest_ipv4}")
+            print(f"最佳 IPv6: {fastest_ipv6}")
             
             return domain, fastest_ipv4, fastest_ipv6
 
