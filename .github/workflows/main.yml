@@ -3,49 +3,39 @@ name: Check Hosts
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 */1 * * *'
+    - cron: '0 */1 * * *'   # 每 1h
 
 permissions:
-  contents: write  # 确保有写入权限
+  contents: write   # 推送权限
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
-      
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.10'
-        
-    - name: Install dependencies
-      run: |
-        sudo apt update
-        sudo apt install --only-upgrade python3-pip
-        sudo apt install build-essential libssl-dev libffi-dev
-        python3 -m venv venv  # 创建虚拟环境
-        source venv/bin/activate  # 激活虚拟环境
-        pip install --upgrade pip  # 在虚拟环境中升级pip
-        pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple  # 设置清华源
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        
-    - name: Run Python script
-      run: |
-        source venv/bin/activate  # 激活虚拟环境
-        ./venv/bin/python check_hosts.py  # 使用虚拟环境中的Python解释器运行脚本
-        
-    - name: 提交更改
-      run: |
-         git config --global user.name 'GitHub Action'
-         git config --global user.email 'action@github.com'
-         git add README.md hosts
-         git commit -m "Update Hosts IP [action]" || echo "No changes to commit"
-      continue-on-error: true
 
-    - name: Push changes
-      env:
-       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: git push origin main
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v4           # 最新稳定版
+
+    - name: Setup Python & cache pip
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'                      # 官方缓存，二次运行秒装
+
+    - name: Install deps
+      run: |
+        # 无编译依赖，纯 wheels，2s 装完
+        pip install --upgrade pip
+        pip install httpx
+
+    - name: Generate hosts
+      run: python check_hosts.py --country HK
+
+    - name: Commit & push
+      run: |
+        git config user.name 'github-actions[bot]'
+        git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+        git pull --rebase origin main || true   # 防止冲突
+        git add README.md hosts
+        git commit -m "Update hosts [skip ci]" || echo "No changes"
+        git push
