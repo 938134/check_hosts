@@ -17,24 +17,24 @@
 #### 2.1.1 IPv4地址复制下面的内容
 
 ```bash
-3.169.231.17                api.themoviedb.org
-3.167.192.73                api.tmdb.org
-13.225.117.78               www.themoviedb.org
+3.169.231.116               api.themoviedb.org
+3.167.192.35                api.tmdb.org
+13.225.117.77               www.themoviedb.org
 3.170.218.86                api.thetvdb.com
 51.89.210.79                webservice.fanart.tv
 149.154.167.220             api.telegram.org
 43.135.106.8                qyapi.weixin.qq.com
-35.73.126.78                slack.com
-151.101.128.223             pypi.org
+52.192.46.121               slack.com
+151.101.0.223               pypi.org
 20.200.245.247              github.com
 20.200.245.246              codeload.github.com
 20.200.245.245              api.github.com
-185.199.109.133             raw.githubusercontent.com
-109.61.83.246               image.tmdb.org
-212.102.50.59               images.tmdb.org
+185.199.108.133             raw.githubusercontent.com
+212.102.50.52               image.tmdb.org
+109.61.83.247               images.tmdb.org
 ```
 
-该内容会自动定时更新， 数据更新时间：2025-10-21T15:03:07+08:00
+该内容会自动定时更新， 数据更新时间：2025-10-21T15:12:39+08:00
 
 #### 2.1.2 IPv6地址复制下面的内容
 
@@ -42,7 +42,7 @@
 # No IPv6 entries
 ```
 
-该内容会自动定时更新， 数据更新时间：2025-10-21T15:03:07+08:00
+该内容会自动定时更新， 数据更新时间：2025-10-21T15:12:39+08:00
 
 > [!NOTE]
 > 由于项目搭建在Github Aciton，延时数据获取于Github Action 虚拟主机网络环境，请自行测试可用性，建议使用本地网络环境自动设置。
