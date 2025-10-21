@@ -24,7 +24,7 @@ jobs:
 
     - name: Install deps
       run: |
-        pip install httpx tenacity
+        pip install httpx tenacity cloudscraper
 
     - name: Generate hosts
       run: python check_hosts.py --country HK
