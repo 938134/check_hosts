@@ -94,27 +94,34 @@ class HostsBuilder:
 
     # ✅ Playwright 真浏览器拿 Token
     async def get_csrf_token(self):
-        async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True)
-            page = await browser.new_page(
-                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                           "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0"
-            )
-            # 修正 URL 并缩短等待策略
-            await page.goto(f"https://dnschecker.org/country/{self.country_path}/",
-                            wait_until="domcontentloaded")
-            api_url = f"https://dnschecker.org/ajax_files/gen_csrf.php?udp={self.udp}"
-            resp = await page.request.get(api_url)
-            data = await resp.json()
-            token = data.get("csrf")
-            await browser.close()
-            if token:
-                print(f"获取CSRF Token: {token}")
-                self.csrf_token = token
-                return token
-            else:
-                print("无法获取 CSRF Token")
-                return None
+        """带重试的真浏览器拿 Token"""
+        for attempt in range(1, 4):               # 最多 3 次
+            async with async_playwright() as p:
+                browser = await p.chromium.launch(headless=True)
+                page = await browser.new_page(
+                    user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                               "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0"
+                )
+                try:
+                    await page.goto(f"https://dnschecker.org/country/{self.country_path}/",
+                                    wait_until="domcontentloaded")
+                    # 拿 token
+                    api_url = f"https://dnschecker.org/ajax_files/gen_csrf.php?udp={self.udp}"
+                    resp = await page.request.get(api_url)
+                    if resp.ok and resp.headers.get("content-type", "").startswith("application/json"):
+                        data = await resp.json()
+                        token = data.get("csrf")
+                        if token:
+                            print(f"获取CSRF Token: {token}")
+                            self.csrf_token = token
+                            return token
+                except Exception as e:
+                    print(f"[尝试 {attempt}] 获取 token 失败: {e}")
+                finally:
+                    await browser.close()
+                await asyncio.sleep(2)
+        print("3 次均失败，退出")
+        return None
 
     async def fetch_ips(self, domain: str, record_type: str):
         url = (
