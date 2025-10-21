@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-GitHub Actions 实测通 | 异步 + 重试 | 纯 httpx 过 CF
+GitHub Actions 实测通 | 使用 cloudscraper 过 CF
 """
 
 # ======================== 可配置区域 ========================
@@ -31,6 +31,7 @@ import os
 import sys
 from datetime import datetime, timezone, timedelta
 from tenacity import retry, stop_after_attempt, wait_random
+import cloudscraper
 
 HOSTS_TEMPLATE = """# IPv4 Hosts
 {ipv4_content}
@@ -72,49 +73,57 @@ def write_hosts(hosts_content: str):
     print(f"\n~最新Hosts {hosts_path} 已更新~")
 
 
-# ---------- 修复版：重试拿 Token ----------
+# ---------- 使用 cloudscraper 过 CF ----------
 @retry(stop=stop_after_attempt(3), wait=wait_random(min=2, max=4))
-async def get_csrf_token(udp: float, country_path: str):
-    """修复版：调整referer和URL参数"""
-    # 使用与成功代码相似的URL构造
+def get_csrf_token_sync(udp: float, country_path: str):
+    """同步版本，使用 cloudscraper 绕过 CF"""
     url = f'https://dnschecker.org/ajax_files/gen_csrf.php?udp={udp}'
     
-    # 修复referer：使用小写国家代码，确保格式正确
     headers = {
-        'referer': f'https://dnschecker.org/country/{country_path.lower()}/',
+        'referer': f'https://dnschecker.org/country/{country_path}/',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
                       '(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0',
-        'Accept': 'application/json, text/javascript, */*; q=0.01',
-        'X-Requested-With': 'XMLHttpRequest',
     }
     
-    print(f"[DEBUG] 请求URL: {url}")
-    print(f"[DEBUG] Referer: {headers['referer']}")
+    print(f"[DEBUG] 使用 cloudscraper 请求URL: {url}")
     
-    async with httpx.AsyncClient(
-        timeout=10,
-        follow_redirects=True
-    ) as client:
-        resp = await client.get(url, headers=headers)
+    # 创建 cloudscraper 实例
+    scraper = cloudscraper.create_scraper(
+        browser={
+            'browser': 'chrome',
+            'platform': 'windows',
+            'mobile': False
+        }
+    )
+    
+    try:
+        resp = scraper.get(url, headers=headers, timeout=10)
         print(f"[get_csrf_token] HTTP {resp.status_code}")
         
         if resp.status_code == 403:
-            print("403 Forbidden - 可能是referer或参数问题")
-            # 尝试输出响应内容查看详细信息
-            try:
-                error_content = resp.text
-                print(f"错误响应: {error_content[:200]}...")
-            except:
-                pass
-            raise ValueError("403 Forbidden")
+            print("仍然遇到 403，尝试其他方法...")
+            return None
+            
+        if resp.status_code == 200:
+            data = resp.json()
+            token = data.get("csrf")
+            if token:
+                print(f"获取CSRF Token成功: {token}")
+                return token
+                
+        print(f"获取token失败，响应: {resp.text[:200]}")
+        return None
         
-        resp.raise_for_status()
-        data = resp.json()
-        token = data.get("csrf")
-        if token:
-            print(f"获取CSRF Token成功: {token}")
-            return token
-        raise ValueError("token 为空")
+    except Exception as e:
+        print(f"cloudscraper 请求失败: {e}")
+        return None
+
+
+# 异步包装器
+async def get_csrf_token(udp: float, country_path: str):
+    """异步包装同步函数"""
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(None, get_csrf_token_sync, udp, country_path)
 # ------------------------------------------------
 
 
@@ -125,8 +134,7 @@ class HostsBuilder:
             print(f"不支持的国家/地区: {country_code}，支持列表: {list(COUNTRY_MAP.keys())}")
             sys.exit(1)
         
-        # 确保country_path是小写，与referer匹配
-        self.country_path = COUNTRY_MAP[self.country_code].lower()  # 添加.lower()
+        self.country_path = COUNTRY_MAP[self.country_code]
         self.udp = random.random() * 1000 + (int(time.time() * 1000) % 1000)
         self.csrf_token = None
 
@@ -148,21 +156,27 @@ class HostsBuilder:
             "referer": f"https://dnschecker.org/country/{self.country_path}/",
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
                           "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0",
-            "Accept": "application/json, text/javascript, */*; q=0.01",
-            "X-Requested-With": "XMLHttpRequest",
         }
-        async with httpx.AsyncClient(timeout=CONFIG["dns_timeout"]) as client:
-            try:
-                resp = await client.get(url, headers=headers)
-                if resp.status_code == 200:
-                    data = resp.json()
-                    if "result" in data and "ips" in data["result"]:
-                        ips_str = data["result"]["ips"]
-                        return [ip.strip() for ip in ips_str.split("<br />") if ip.strip()]
-                return []
-            except httpx.ReadTimeout:
-                print(f"DNS 查询超时: {domain}")
-                return []
+        
+        # 对于 API 请求也使用 cloudscraper
+        loop = asyncio.get_event_loop()
+        scraper = cloudscraper.create_scraper()
+        
+        try:
+            resp = await loop.run_in_executor(
+                None, 
+                lambda: scraper.get(url, headers=headers, timeout=CONFIG["dns_timeout"])
+            )
+            
+            if resp.status_code == 200:
+                data = resp.json()
+                if "result" in data and "ips" in data["result"]:
+                    ips_str = data["result"]["ips"]
+                    return [ip.strip() for ip in ips_str.split("<br />") if ip.strip()]
+            return []
+        except Exception as e:
+            print(f"DNS 查询失败: {domain}, 错误: {e}")
+            return []
 
     async def ping_ip(self, ip: str):
         try:
@@ -197,6 +211,7 @@ class HostsBuilder:
     async def run(self):
         print(f"开始检测最快IP —— 线路: {self.country_code}({self.country_path})")
         if not await self.get_csrf():
+            print("获取 CSRF Token 失败，退出")
             sys.exit(1)
 
         domains_file = os.path.join(os.path.dirname(__file__), "domains.txt")
@@ -227,7 +242,7 @@ class HostsBuilder:
 
 # ---------- 入口 ----------
 async def async_main():
-    parser = argparse.ArgumentParser(description="多线路 hosts 自动生成器（httpx + 重试版）")
+    parser = argparse.ArgumentParser(description="多线路 hosts 自动生成器（cloudscraper 过 CF 版）")
     parser.add_argument(
         "-c", "--country", default=CONFIG["default_country"],
         help=f"国家/地区代码，默认: {CONFIG['default_country']}，可选: {list(COUNTRY_MAP.keys())}"
