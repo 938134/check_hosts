@@ -1,7 +1,7 @@
 # IPv4 Hosts
-3.169.231.116               api.themoviedb.org
-3.167.192.35                api.tmdb.org
-13.225.117.77               www.themoviedb.org
+18.244.214.79               api.themoviedb.org
+18.238.192.8                api.tmdb.org
+13.225.117.101              www.themoviedb.org
 3.170.218.86                api.thetvdb.com
 51.89.210.79                webservice.fanart.tv
 149.154.167.220             api.telegram.org
@@ -11,12 +11,12 @@
 20.200.245.247              github.com
 20.200.245.246              codeload.github.com
 20.200.245.245              api.github.com
-185.199.108.133             raw.githubusercontent.com
-212.102.50.52               image.tmdb.org
-109.61.83.247               images.tmdb.org
+185.199.110.133             raw.githubusercontent.com
+109.61.83.97                image.tmdb.org
+212.102.50.50               images.tmdb.org
 
 # IPv6 Hosts
 # No IPv6 entries
 
-# Generated at: 2025-10-21T15:12:39+08:00
+# Generated at: 2025-10-21T15:19:59+08:00
 # Star me: https://github.com/938134/check_hosts
