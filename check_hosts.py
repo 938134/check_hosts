@@ -1,33 +1,29 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-GitHub Actions 完整可运行版
-- 支持命令行切换国家/地区
-- 使用 Playwright 绕过 Cloudflare JS 挑战获取 CSRF Token
-- 其余逻辑不变：异步 DNS 查询 → 延迟测试 → 生成 hosts
+无 Playwright 版 | 异步 + 重试 | GitHub Actions 直接抄
 """
 
 # ======================== 可配置区域 ========================
 CONFIG = {
-    "default_country": "HK",  # 默认线路
-    "max_concurrent": 5,  # 最大并发
-    "ping_port": 80,  # 延迟测试端口
-    "ping_timeout": 2,  # 延迟测试超时(秒)
-    "dns_timeout": 10,  # DNS 查询超时(秒)
-    "template_file": "README_template.md",  # 模板
-    "readme_file": "README.md",  # 输出文档
-    "hosts_file": "hosts",  # 输出 hosts
+    "default_country": "HK",
+    "max_concurrent": 5,
+    "ping_port": 80,
+    "ping_timeout": 2,
+    "dns_timeout": 10,
+    "template_file": "README_template.md",
+    "readme_file": "README.md",
+    "hosts_file": "hosts",
 }
 
-# 国家/地区代码 ↔ dnschecker 路径映射
 COUNTRY_MAP = {
-    "HK": "hk",  # 香港 - 最稳/最低延迟，默认首选
-    "JP": "jp",  # 日本 - 华东/华北最快
-    "SG": "sg",  # 新加坡 - 华南/移动友好
-    "KR": "kr",  # 韩国 - 联通/东北表现佳
-    "TW": "tw",  # 台湾 - 东南沿海可选
-    "US": "us",  # 美国 - 冷备/大带宽廉价
-    "DE": "de",  # 德国 - 欧洲备用
+    "HK": "hk",  # 香港
+    "JP": "jp",  # 日本
+    "SG": "sg",  # 新加坡
+    "KR": "kr",  # 韩国
+    "TW": "tw",  # 台湾
+    "US": "us",  # 美国
+    "DE": "de",  # 德国
 }
 # ==========================================================
 
@@ -39,7 +35,7 @@ import time
 import os
 import sys
 from datetime import datetime, timezone, timedelta
-from playwright.async_api import async_playwright
+from tenacity import retry, stop_after_attempt, wait_random
 
 HOSTS_TEMPLATE = """# IPv4 Hosts
 {ipv4_content}
@@ -81,6 +77,26 @@ def write_hosts(hosts_content: str):
     print(f"\n~最新Hosts {hosts_path} 已更新~")
 
 
+# ---------- 重试拿 Token ----------
+@retry(stop=stop_after_attempt(3), wait=wait_random(min=1, max=3))
+async def get_csrf_token(udp: float, country_path: str):
+    url = f"https://dnschecker.org/ajax_files/gen_csrf.php?udp={udp}"
+    headers = {
+        "referer": f"https://dnschecker.org/country/{country_path}/",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                      "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0",
+    }
+    async with httpx.AsyncClient(timeout=10) as client:
+        resp = await client.get(url, headers=headers)
+        resp.raise_for_status()
+        data = resp.json()
+        token = data.get("csrf")
+        if token:
+            print(f"获取CSRF Token: {token}")
+            return token
+        raise ValueError("token 为空")
+
+
 # ---------- 核心 ----------
 class HostsBuilder:
     def __init__(self, country_code: str):
@@ -92,36 +108,13 @@ class HostsBuilder:
         self.udp = random.random() * 1000 + (int(time.time() * 1000) % 1000)
         self.csrf_token = None
 
-    # ✅ Playwright 真浏览器拿 Token
-    async def get_csrf_token(self):
-        """带重试的真浏览器拿 Token"""
-        for attempt in range(1, 4):               # 最多 3 次
-            async with async_playwright() as p:
-                browser = await p.chromium.launch(headless=True)
-                page = await browser.new_page(
-                    user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                               "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0"
-                )
-                try:
-                    await page.goto(f"https://dnschecker.org/country/{self.country_path}/",
-                                    wait_until="domcontentloaded")
-                    # 拿 token
-                    api_url = f"https://dnschecker.org/ajax_files/gen_csrf.php?udp={self.udp}"
-                    resp = await page.request.get(api_url)
-                    if resp.ok and resp.headers.get("content-type", "").startswith("application/json"):
-                        data = await resp.json()
-                        token = data.get("csrf")
-                        if token:
-                            print(f"获取CSRF Token: {token}")
-                            self.csrf_token = token
-                            return token
-                except Exception as e:
-                    print(f"[尝试 {attempt}] 获取 token 失败: {e}")
-                finally:
-                    await browser.close()
-                await asyncio.sleep(2)
-        print("3 次均失败，退出")
-        return None
+    async def get_csrf(self):
+        try:
+            self.csrf_token = await get_csrf_token(self.udp, self.country_path)
+            return self.csrf_token
+        except Exception as e:
+            print(f"3 次均失败: {e}")
+            return None
 
     async def fetch_ips(self, domain: str, record_type: str):
         url = (
@@ -179,7 +172,7 @@ class HostsBuilder:
 
     async def run(self):
         print(f"开始检测最快IP —— 线路: {self.country_code}({self.country_path})")
-        if not await self.get_csrf_token():
+        if not await self.get_csrf():
             sys.exit(1)
 
         domains_file = os.path.join(os.path.dirname(__file__), "domains.txt")
@@ -210,7 +203,7 @@ class HostsBuilder:
 
 # ---------- 入口 ----------
 async def async_main():
-    parser = argparse.ArgumentParser(description="多线路 hosts 自动生成器（Playwright 版）")
+    parser = argparse.ArgumentParser(description="多线路 hosts 自动生成器（httpx + 重试版）")
     parser.add_argument(
         "-c", "--country", default=CONFIG["default_country"],
         help=f"国家/地区代码，默认: {CONFIG['default_country']}，可选: {list(COUNTRY_MAP.keys())}"
