@@ -124,6 +124,57 @@ async def get_csrf_token(udp: float, country_path: str):
     """异步包装同步函数"""
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(None, get_csrf_token_sync, udp, country_path)
+
+
+# ---------- DNS 查询函数 ----------
+def fetch_ips_sync(domain: str, record_type: str, country_path: str, udp: float, csrf_token: str):
+    """同步版本的 DNS 查询"""
+    url = (
+        f"https://dnschecker.org/ajax_files/api/336/{record_type}/{domain}"
+        f"?dns_key=country&dns_value={country_path}&v=0.36&cd_flag=1&upd={udp}"
+    )
+    headers = {
+        "csrftoken": csrf_token,
+        "referer": f"https://dnschecker.org/country/{country_path}/",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                      "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0",
+    }
+    
+    print(f"[DEBUG] 查询 {record_type} 记录: {domain}")
+    
+    # 创建新的 scraper 实例
+    scraper = cloudscraper.create_scraper()
+    
+    try:
+        resp = scraper.get(url, headers=headers, timeout=CONFIG["dns_timeout"])
+        print(f"[DNS查询] {domain} {record_type} - HTTP {resp.status_code}")
+        
+        if resp.status_code == 200:
+            data = resp.json()
+            print(f"[DEBUG] 响应数据: {data}")  # 调试输出
+            
+            if "result" in data and "ips" in data["result"]:
+                ips_str = data["result"]["ips"]
+                ips = [ip.strip() for ip in ips_str.split("<br />") if ip.strip()]
+                print(f"[DEBUG] 解析到 {len(ips)} 个 {record_type} IP: {ips}")
+                return ips
+            else:
+                print(f"[DEBUG] 未找到IP数据，完整响应: {data}")
+        else:
+            print(f"[DNS查询] 失败: {resp.status_code} - {resp.text[:200]}")
+            
+        return []
+    except Exception as e:
+        print(f"DNS 查询异常: {domain} {record_type}, 错误: {e}")
+        return []
+
+
+async def fetch_ips(domain: str, record_type: str, country_path: str, udp: float, csrf_token: str):
+    """异步包装 DNS 查询"""
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(
+        None, fetch_ips_sync, domain, record_type, country_path, udp, csrf_token
+    )
 # ------------------------------------------------
 
 
@@ -145,38 +196,6 @@ class HostsBuilder:
         except Exception as e:
             print(f"3 次均失败: {e}")
             return None
-
-    async def fetch_ips(self, domain: str, record_type: str):
-        url = (
-            f"https://dnschecker.org/ajax_files/api/336/{record_type}/{domain}"
-            f"?dns_key=country&dns_value={self.country_path}&v=0.36&cd_flag=1&upd={self.udp}"
-        )
-        headers = {
-            "csrftoken": self.csrf_token,
-            "referer": f"https://dnschecker.org/country/{self.country_path}/",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                          "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0",
-        }
-        
-        # 对于 API 请求也使用 cloudscraper
-        loop = asyncio.get_event_loop()
-        scraper = cloudscraper.create_scraper()
-        
-        try:
-            resp = await loop.run_in_executor(
-                None, 
-                lambda: scraper.get(url, headers=headers, timeout=CONFIG["dns_timeout"])
-            )
-            
-            if resp.status_code == 200:
-                data = resp.json()
-                if "result" in data and "ips" in data["result"]:
-                    ips_str = data["result"]["ips"]
-                    return [ip.strip() for ip in ips_str.split("<br />") if ip.strip()]
-            return []
-        except Exception as e:
-            print(f"DNS 查询失败: {domain}, 错误: {e}")
-            return []
 
     async def ping_ip(self, ip: str):
         try:
@@ -201,11 +220,25 @@ class HostsBuilder:
 
     async def process_domain(self, domain, semaphore):
         async with semaphore:
+            print(f"\n{'='*50}")
             print(f"正在处理: {domain}")
-            ipv4_ips = await self.fetch_ips(domain, "A")
-            ipv6_ips = await self.fetch_ips(domain, "AAAA")
+            print(f"{'='*50}")
+            
+            # 查询 IPv4
+            ipv4_ips = await fetch_ips(domain, "A", self.country_path, self.udp, self.csrf_token)
+            print(f"IPv4 结果: {ipv4_ips}")
+            
+            # 查询 IPv6
+            ipv6_ips = await fetch_ips(domain, "AAAA", self.country_path, self.udp, self.csrf_token)
+            print(f"IPv6 结果: {ipv6_ips}")
+            
+            # 测试延迟
             fastest_ipv4 = await self.find_fastest(ipv4_ips) if ipv4_ips else None
             fastest_ipv6 = await self.find_fastest(ipv6_ips) if ipv6_ips else None
+            
+            print(f"最快 IPv4: {fastest_ipv4}")
+            print(f"最快 IPv6: {fastest_ipv6}")
+            
             return domain, fastest_ipv4, fastest_ipv6
 
     async def run(self):
@@ -230,6 +263,12 @@ class HostsBuilder:
         update_time = datetime.now(timezone(timedelta(hours=8))).replace(microsecond=0).isoformat()
         ipv4_block = "\n".join(f"{ip:<27} {dom}" for ip, dom in ipv4_list) or "# No IPv4 entries"
         ipv6_block = "\n".join(f"{ip:<50} {dom}" for ip, dom in ipv6_list) or "# No IPv6 entries"
+
+        print(f"\n{'='*50}")
+        print("最终结果:")
+        print(f"IPv4 条目: {len(ipv4_list)}")
+        print(f"IPv6 条目: {len(ipv6_list)}")
+        print(f"{'='*50}")
 
         hosts_content = HOSTS_TEMPLATE.format(
             ipv4_content=ipv4_block,
