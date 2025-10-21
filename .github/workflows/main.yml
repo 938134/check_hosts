@@ -22,11 +22,9 @@ jobs:
         python-version: '3.11'
         cache: 'pip'
 
-    - name: Install python deps & playwright
+    - name: Install deps
       run: |
-        pip install --upgrade pip
-        pip install -r requirements.txt
-        playwright install chromium   # 官方 Runner 30s 装完
+        pip install httpx tenacity
 
     - name: Generate hosts
       run: python check_hosts.py --country HK
