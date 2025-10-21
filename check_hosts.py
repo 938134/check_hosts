@@ -100,8 +100,9 @@ class HostsBuilder:
                 user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
                            "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0"
             )
+            # 修正 URL 并缩短等待策略
             await page.goto(f"https://dnschecker.org/country/{self.country_path}/",
-                            wait_until="networkidle")
+                            wait_until="domcontentloaded")
             api_url = f"https://dnschecker.org/ajax_files/gen_csrf.php?udp={self.udp}"
             resp = await page.request.get(api_url)
             data = await resp.json()
