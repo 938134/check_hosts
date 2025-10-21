@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-通用多线路 hosts 生成器
+Github Actions 友好 / 多国家线路 / 防 403 版本
 https://github.com/938134/check_hosts
 """
 
 # ======================== 可配置区域 ========================
 CONFIG = {
-    "default_country": "JP",  # 默认线路
+    "default_country": "HK",  # 默认线路
     "max_concurrent": 5,  # 最大并发
     "ping_port": 80,  # 延迟测试端口
     "ping_timeout": 2,  # 延迟测试超时(秒)
@@ -27,6 +27,25 @@ COUNTRY_MAP = {
     "US": "us",  # 美国 - 冷备/大带宽廉价
     "DE": "de",  # 德国 - 欧洲备用
 }
+
+# 浏览器特征池（随机取一套，绕过 JA3 指纹）
+HEADERS_POOL = [
+    {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                      "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0",
+        "sec-ch-ua": '"Microsoft Edge";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": '"Windows"',
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+        "Accept-Encoding": "gzip, deflate, br",
+        "DNT": "1",
+        "Connection": "keep-alive",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin",
+    }
+]
 # ==========================================================
 
 import argparse
@@ -38,6 +57,17 @@ import os
 import sys
 from datetime import datetime, timezone, timedelta
 
+HOSTS_TEMPLATE = """# IPv4 Hosts
+{ipv4_content}
+
+# IPv6 Hosts
+{ipv6_content}
+
+# Generated at: {update_time}
+# Star me: https://github.com/938134/check_hosts
+"""
+
+
 # ---------- 工具 ----------
 def load_template():
     tpl = os.path.join(os.path.dirname(__file__), CONFIG["template_file"])
@@ -46,6 +76,7 @@ def load_template():
         sys.exit(1)
     with open(tpl, "r", encoding="utf-8") as f:
         return f.read()
+
 
 def write_readme(ipv4_content: str, ipv6_content: str, update_time: str):
     content = load_template().format(
@@ -58,11 +89,13 @@ def write_readme(ipv4_content: str, ipv6_content: str, update_time: str):
         f.write(content)
     print("\n~README.md 已更新~")
 
+
 def write_hosts(hosts_content: str):
     hosts_path = os.path.join(os.path.dirname(__file__), CONFIG["hosts_file"])
     with open(hosts_path, "w", encoding="utf-8") as f:
         f.write(hosts_content)
     print(f"\n~最新Hosts {hosts_path} 已更新~")
+
 
 # ---------- 核心 ----------
 class HostsBuilder:
@@ -75,14 +108,23 @@ class HostsBuilder:
         self.udp = random.random() * 1000 + (int(time.time() * 1000) % 1000)
         self.csrf_token = None
 
+    async def warm_up_session(self):
+        """先 GET 首页拿 Cookie & 延迟"""
+        url = f"https://dnschecker.org/country/{self.country_path}/"
+        headers = random.choice(HEADERS_POOL).copy()
+        headers["referer"] = "https://dnschecker.org/"
+        async with httpx.AsyncClient(timeout=10) as client:
+            await client.get(url, headers=headers)
+            await asyncio.sleep(random.uniform(1, 2))
+            return client.cookies
+
     async def get_csrf_token(self):
         url = f"https://dnschecker.org/ajax_files/gen_csrf.php?udp={self.udp}"
-        headers = {
-            "referer": f"https://dnschecker.org/country/{self.country_path}/",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                          "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0",
-        }
-        async with httpx.AsyncClient() as client:
+        headers = random.choice(HEADERS_POOL).copy()
+        headers["referer"] = f"https://dnschecker.org/country/{self.country_path}/"
+        cookies = await self.warm_up_session()
+        async with httpx.AsyncClient(timeout=10) as client:
+            client.cookies = cookies
             resp = await client.get(url, headers=headers)
             if resp.status_code == 200:
                 token = resp.json().get("csrf")
@@ -98,12 +140,9 @@ class HostsBuilder:
             f"https://dnschecker.org/ajax_files/api/336/{record_type}/{domain}"
             f"?dns_key=country&dns_value={self.country_path}&v=0.36&cd_flag=1&upd={self.udp}"
         )
-        headers = {
-            "csrftoken": self.csrf_token,
-            "referer": f"https://dnschecker.org/country/{self.country_path}/",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                          "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0",
-        }
+        headers = random.choice(HEADERS_POOL).copy()
+        headers["csrftoken"] = self.csrf_token
+        headers["referer"] = f"https://dnschecker.org/country/{self.country_path}/"
         async with httpx.AsyncClient(timeout=CONFIG["dns_timeout"]) as client:
             try:
                 resp = await client.get(url, headers=headers)
@@ -177,9 +216,10 @@ class HostsBuilder:
         write_readme(ipv4_block, ipv6_block, update_time)
         write_hosts(hosts_content)
 
+
 # ---------- 入口 ----------
 async def async_main():
-    parser = argparse.ArgumentParser(description="多线路 hosts 自动生成器")
+    parser = argparse.ArgumentParser(description="多线路 hosts 自动生成器（GitHub Actions 版）")
     parser.add_argument(
         "-c", "--country", default=CONFIG["default_country"],
         help=f"国家/地区代码，默认: {CONFIG['default_country']}，可选: {list(COUNTRY_MAP.keys())}"
@@ -187,6 +227,7 @@ async def async_main():
     args = parser.parse_args()
     builder = HostsBuilder(args.country)
     await builder.run()
+
 
 if __name__ == "__main__":
     asyncio.run(async_main())
