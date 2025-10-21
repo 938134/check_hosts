@@ -35,7 +35,7 @@ jobs:
     - name: Run Python script
       run: |
         source venv/bin/activate  # 激活虚拟环境
-        ./venv/bin/python check_hosts2.py  # 使用虚拟环境中的Python解释器运行脚本
+        ./venv/bin/python check_hosts.py  # 使用虚拟环境中的Python解释器运行脚本
         
     - name: 提交更改
       run: |
