@@ -78,7 +78,7 @@ def write_hosts(hosts_content: str):
 
 
 # ---------- 重试拿 Token ----------
-@retry(stop=stop_after_attempt(3), wait=wait_random(min=1, max=3))
+@retry(stop=stop_after_attempt(3), wait=wait_random(min=2, max=4))
 async def get_csrf_token(udp: float, country_path: str):
     url = f"https://dnschecker.org/ajax_files/gen_csrf.php?udp={udp}"
     headers = {
@@ -88,6 +88,8 @@ async def get_csrf_token(udp: float, country_path: str):
     }
     async with httpx.AsyncClient(timeout=10) as client:
         resp = await client.get(url, headers=headers)
+        # ←←← 新增：打印状态码 & 前 200 字符 ←←←
+        print(f"[get_csrf_token] HTTP {resp.status_code}  {resp.text[:200]}")
         resp.raise_for_status()
         data = resp.json()
         token = data.get("csrf")
@@ -95,7 +97,6 @@ async def get_csrf_token(udp: float, country_path: str):
             print(f"获取CSRF Token: {token}")
             return token
         raise ValueError("token 为空")
-
 
 # ---------- 核心 ----------
 class HostsBuilder:
