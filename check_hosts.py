@@ -174,40 +174,6 @@ async def fetch_ips(domain: str, record_type: str, country_path: str, udp: float
     )
 
 
-# ---------- 改进的 ping 测试 ----------
-async def ping_ip(self, ip: str):
-    """改进的 ping 测试，支持 IPv6"""
-    try:
-        start = time.time()
-        
-        # 判断是 IPv4 还是 IPv6
-        if ':' in ip:  # IPv6
-            # 对于 IPv6，使用更简单的连通性测试
-            async with httpx.AsyncClient() as client:
-                # 尝试使用 HTTPS 而不是 HTTP，因为很多 IPv6 服务可能不支持 HTTP
-                await client.get(f"https://[{ip}]/", timeout=CONFIG["ping_timeout"])
-        else:  # IPv4
-            async with httpx.AsyncClient() as client:
-                await client.get(f"http://{ip}:{CONFIG['ping_port']}", timeout=CONFIG["ping_timeout"])
-                
-        latency = (time.time() - start) * 1000
-        return ip, latency
-    except Exception as e:
-        # 如果 HTTPS 失败，尝试 HTTP（仅对 IPv6）
-        if ':' in ip:
-            try:
-                start = time.time()
-                async with httpx.AsyncClient() as client:
-                    await client.get(f"http://[{ip}]:{CONFIG['ping_port']}", timeout=CONFIG["ping_timeout"])
-                latency = (time.time() - start) * 1000
-                return ip, latency
-            except Exception:
-                return ip, float("inf")
-        else:
-            return ip, float("inf")
-# ------------------------------------------------
-
-
 class HostsBuilder:
     def __init__(self, country_code: str):
         self.country_code = country_code.upper()
@@ -226,6 +192,37 @@ class HostsBuilder:
         except Exception as e:
             print(f"3 次均失败: {e}")
             return None
+
+    async def ping_ip(self, ip: str):
+        """改进的 ping 测试，支持 IPv6"""
+        try:
+            start = time.time()
+            
+            # 判断是 IPv4 还是 IPv6
+            if ':' in ip:  # IPv6
+                # 对于 IPv6，使用更简单的连通性测试
+                async with httpx.AsyncClient() as client:
+                    # 尝试使用 HTTPS 而不是 HTTP，因为很多 IPv6 服务可能不支持 HTTP
+                    await client.get(f"https://[{ip}]/", timeout=CONFIG["ping_timeout"])
+            else:  # IPv4
+                async with httpx.AsyncClient() as client:
+                    await client.get(f"http://{ip}:{CONFIG['ping_port']}", timeout=CONFIG["ping_timeout"])
+                    
+            latency = (time.time() - start) * 1000
+            return ip, latency
+        except Exception as e:
+            # 如果 HTTPS 失败，尝试 HTTP（仅对 IPv6）
+            if ':' in ip:
+                try:
+                    start = time.time()
+                    async with httpx.AsyncClient() as client:
+                        await client.get(f"http://[{ip}]:{CONFIG['ping_port']}", timeout=CONFIG["ping_timeout"])
+                    latency = (time.time() - start) * 1000
+                    return ip, latency
+                except Exception:
+                    return ip, float("inf")
+            else:
+                return ip, float("inf")
 
     async def find_fastest(self, ips, ip_type="IPv4"):
         """改进的最快IP查找，支持 IPv6"""
