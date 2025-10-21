@@ -3,10 +3,10 @@ name: Check Hosts
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 */1 * * *'   # 每 1h
+    - cron: '0 */1 * * *'
 
 permissions:
-  contents: write   # 推送权限
+  contents: write
 
 jobs:
   build:
@@ -14,19 +14,19 @@ jobs:
 
     steps:
     - name: Checkout repo
-      uses: actions/checkout@v4           # 最新稳定版
+      uses: actions/checkout@v4
 
     - name: Setup Python & cache pip
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
-        cache: 'pip'                      # 官方缓存，二次运行秒装
+        cache: 'pip'
 
-    - name: Install deps
+    - name: Install python deps & playwright
       run: |
-        # 无编译依赖，纯 wheels，2s 装完
         pip install --upgrade pip
-        pip install httpx
+        pip install -r requirements.txt
+        playwright install chromium   # 官方 Runner 30s 装完
 
     - name: Generate hosts
       run: python check_hosts.py --country HK
@@ -35,7 +35,7 @@ jobs:
       run: |
         git config user.name 'github-actions[bot]'
         git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-        git pull --rebase origin main || true   # 防止冲突
+        git pull --rebase origin main || true
         git add README.md hosts
         git commit -m "Update hosts [skip ci]" || echo "No changes"
         git push
