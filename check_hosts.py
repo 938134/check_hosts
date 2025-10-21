@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-无 Playwright 版 | 异步 + 重试 | GitHub Actions 直接抄
+GitHub Actions 实测通 | 异步 + 重试 | 纯 httpx 过 CF
 """
 
 # ======================== 可配置区域 ========================
@@ -17,13 +17,8 @@ CONFIG = {
 }
 
 COUNTRY_MAP = {
-    "HK": "hk",  # 香港
-    "JP": "jp",  # 日本
-    "SG": "sg",  # 新加坡
-    "KR": "kr",  # 韩国
-    "TW": "tw",  # 台湾
-    "US": "us",  # 美国
-    "DE": "de",  # 德国
+    "HK": "hk", "JP": "jp", "SG": "sg", "KR": "kr",
+    "TW": "tw", "US": "us", "DE": "de",
 }
 # ==========================================================
 
@@ -80,6 +75,7 @@ def write_hosts(hosts_content: str):
 # ---------- 重试拿 Token ----------
 @retry(stop=stop_after_attempt(3), wait=wait_random(min=2, max=4))
 async def get_csrf_token(udp: float, country_path: str):
+    """照搬原逻辑，改为异步 & 修复国家代码"""
     url = f"https://dnschecker.org/ajax_files/gen_csrf.php?udp={udp}"
     headers = {
         "referer": f"https://dnschecker.org/country/{country_path}/",
@@ -88,8 +84,7 @@ async def get_csrf_token(udp: float, country_path: str):
     }
     async with httpx.AsyncClient(timeout=10) as client:
         resp = await client.get(url, headers=headers)
-        # ←←← 新增：打印状态码 & 前 200 字符 ←←←
-        print(f"[get_csrf_token] HTTP {resp.status_code}  {resp.text[:200]}")
+        print(f"[get_csrf_token] HTTP {resp.status_code}")
         resp.raise_for_status()
         data = resp.json()
         token = data.get("csrf")
@@ -97,8 +92,9 @@ async def get_csrf_token(udp: float, country_path: str):
             print(f"获取CSRF Token: {token}")
             return token
         raise ValueError("token 为空")
+# ------------------------------------------------
 
-# ---------- 核心 ----------
+
 class HostsBuilder:
     def __init__(self, country_code: str):
         self.country_code = country_code.upper()
