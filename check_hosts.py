@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-GitHub Actions 实测通 | 使用 cloudscraper 过 CF
+GitHub Actions 实测通 | 使用 cloudscraper 过 CF | 修复 IPv6 测试
 """
 
 # ======================== 可配置区域 ========================
@@ -151,15 +151,12 @@ def fetch_ips_sync(domain: str, record_type: str, country_path: str, udp: float,
         
         if resp.status_code == 200:
             data = resp.json()
-            print(f"[DEBUG] 响应数据: {data}")  # 调试输出
             
             if "result" in data and "ips" in data["result"]:
                 ips_str = data["result"]["ips"]
                 ips = [ip.strip() for ip in ips_str.split("<br />") if ip.strip()]
-                print(f"[DEBUG] 解析到 {len(ips)} 个 {record_type} IP: {ips}")
+                print(f"[DEBUG] 解析到 {len(ips)} 个 {record_type} IP")
                 return ips
-            else:
-                print(f"[DEBUG] 未找到IP数据，完整响应: {data}")
         else:
             print(f"[DNS查询] 失败: {resp.status_code} - {resp.text[:200]}")
             
@@ -175,6 +172,39 @@ async def fetch_ips(domain: str, record_type: str, country_path: str, udp: float
     return await loop.run_in_executor(
         None, fetch_ips_sync, domain, record_type, country_path, udp, csrf_token
     )
+
+
+# ---------- 改进的 ping 测试 ----------
+async def ping_ip(self, ip: str):
+    """改进的 ping 测试，支持 IPv6"""
+    try:
+        start = time.time()
+        
+        # 判断是 IPv4 还是 IPv6
+        if ':' in ip:  # IPv6
+            # 对于 IPv6，使用更简单的连通性测试
+            async with httpx.AsyncClient() as client:
+                # 尝试使用 HTTPS 而不是 HTTP，因为很多 IPv6 服务可能不支持 HTTP
+                await client.get(f"https://[{ip}]/", timeout=CONFIG["ping_timeout"])
+        else:  # IPv4
+            async with httpx.AsyncClient() as client:
+                await client.get(f"http://{ip}:{CONFIG['ping_port']}", timeout=CONFIG["ping_timeout"])
+                
+        latency = (time.time() - start) * 1000
+        return ip, latency
+    except Exception as e:
+        # 如果 HTTPS 失败，尝试 HTTP（仅对 IPv6）
+        if ':' in ip:
+            try:
+                start = time.time()
+                async with httpx.AsyncClient() as client:
+                    await client.get(f"http://[{ip}]:{CONFIG['ping_port']}", timeout=CONFIG["ping_timeout"])
+                latency = (time.time() - start) * 1000
+                return ip, latency
+            except Exception:
+                return ip, float("inf")
+        else:
+            return ip, float("inf")
 # ------------------------------------------------
 
 
@@ -197,26 +227,29 @@ class HostsBuilder:
             print(f"3 次均失败: {e}")
             return None
 
-    async def ping_ip(self, ip: str):
-        try:
-            start = time.time()
-            async with httpx.AsyncClient() as client:
-                await client.get(f"http://{ip}:{CONFIG['ping_port']}", timeout=CONFIG["ping_timeout"])
-            latency = (time.time() - start) * 1000
-            return ip, latency
-        except Exception:
-            return ip, float("inf")
-
-    async def find_fastest(self, ips):
+    async def find_fastest(self, ips, ip_type="IPv4"):
+        """改进的最快IP查找，支持 IPv6"""
         if not ips:
             return None
+            
+        print(f"\n{ip_type} 延迟测试:")
         tasks = [self.ping_ip(ip) for ip in ips]
         results = await asyncio.gather(*tasks)
-        fastest = min(results, key=lambda x: x[1])
-        print("\n延迟排行:")
-        for ip, latency in sorted(results, key=lambda x: x[1]):
-            print(f"  {ip:<30} {latency:>7.2f}ms")
-        return fastest[0] if fastest[1] != float("inf") else None
+        
+        # 过滤掉超时的结果
+        valid_results = [(ip, latency) for ip, latency in results if latency != float("inf")]
+        
+        if not valid_results:
+            print(f"  {ip_type} 所有地址均超时")
+            return None
+            
+        fastest = min(valid_results, key=lambda x: x[1])
+        
+        print(f"\n{ip_type} 延迟排行:")
+        for ip, latency in sorted(valid_results, key=lambda x: x[1]):
+            print(f"  {ip:<50} {latency:>7.2f}ms")
+            
+        return fastest[0]
 
     async def process_domain(self, domain, semaphore):
         async with semaphore:
@@ -226,15 +259,15 @@ class HostsBuilder:
             
             # 查询 IPv4
             ipv4_ips = await fetch_ips(domain, "A", self.country_path, self.udp, self.csrf_token)
-            print(f"IPv4 结果: {ipv4_ips}")
+            print(f"IPv4 结果: {len(ipv4_ips)} 个地址")
             
             # 查询 IPv6
             ipv6_ips = await fetch_ips(domain, "AAAA", self.country_path, self.udp, self.csrf_token)
-            print(f"IPv6 结果: {ipv6_ips}")
+            print(f"IPv6 结果: {len(ipv6_ips)} 个地址")
             
             # 测试延迟
-            fastest_ipv4 = await self.find_fastest(ipv4_ips) if ipv4_ips else None
-            fastest_ipv6 = await self.find_fastest(ipv6_ips) if ipv6_ips else None
+            fastest_ipv4 = await self.find_fastest(ipv4_ips, "IPv4") if ipv4_ips else None
+            fastest_ipv6 = await self.find_fastest(ipv6_ips, "IPv6") if ipv6_ips else None
             
             print(f"最快 IPv4: {fastest_ipv4}")
             print(f"最快 IPv6: {fastest_ipv6}")
