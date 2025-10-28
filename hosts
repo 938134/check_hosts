@@ -1,29 +1,29 @@
 # IPv4 Hosts
-3.169.231.119               api.themoviedb.org
-3.167.192.104               api.tmdb.org
-13.225.117.78               www.themoviedb.org
+3.169.231.116               api.themoviedb.org
+3.167.192.54                api.tmdb.org
+13.225.117.77               www.themoviedb.org
 3.170.218.86                api.thetvdb.com
 51.89.210.79                webservice.fanart.tv
 149.154.167.220             api.telegram.org
-43.135.106.8                qyapi.weixin.qq.com
+43.135.106.227              qyapi.weixin.qq.com
 52.196.128.139              slack.com
 151.101.64.223              pypi.org
 20.200.245.247              github.com
 20.200.245.246              codeload.github.com
 20.200.245.245              api.github.com
-185.199.111.133             raw.githubusercontent.com
-109.61.83.247               image.tmdb.org
-109.61.83.247               images.tmdb.org
+185.199.109.133             raw.githubusercontent.com
+109.61.83.246               image.tmdb.org
+109.61.83.97                images.tmdb.org
 
 # IPv6 Hosts
-2600:9000:2864:4e00:c:174a:c400:93a1               api.themoviedb.org
-2600:9000:27e0:b200:10:fb02:4000:93a1              api.tmdb.org
-2600:9000:21d3:c00:e:5373:440:93a1                 www.themoviedb.org
+2600:9000:2864:8e00:c:174a:c400:93a1               api.themoviedb.org
+2600:9000:27e0:ea00:10:fb02:4000:93a1              api.tmdb.org
+2600:9000:21d3:3e00:e:5373:440:93a1                www.themoviedb.org
 2001:67c:4e8:f004::9                               api.telegram.org
 2a04:4e42:200::223                                 pypi.org
-2606:50c0:8000::154                                raw.githubusercontent.com
-2600:9000:24b9:3400:14:41bb:de80:93a1              image.tmdb.org
-2400:52e0:1501::1195:1                             images.tmdb.org
+2606:50c0:8003::154                                raw.githubusercontent.com
+2400:52e0:1501::1148:1                             image.tmdb.org
+2400:52e0:1501::1185:1                             images.tmdb.org
 
-# Generated at: 2025-10-28T07:17:22+08:00
+# Generated at: 2025-10-28T09:26:06+08:00
 # Star me: https://github.com/938134/check_hosts
