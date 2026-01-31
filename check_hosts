@@ -6,7 +6,7 @@ GitHub Actions 实测通 | 使用 cloudscraper 过 CF | 修复 IPv6 测试
 
 # ======================== 可配置区域 ========================
 CONFIG = {
-    "default_country": "HK",
+    "default_country": "JP",
     "max_concurrent": 5,
     "ping_port": 80,
     "ping_timeout": 2,
