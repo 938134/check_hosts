@@ -1,29 +1,29 @@
 # IPv4 Hosts
-18.161.156.92               api.themoviedb.org
-18.161.156.114              api.tmdb.org
-52.222.205.11               www.themoviedb.org
-13.225.228.87               api.thetvdb.com
+3.170.19.94                 api.themoviedb.org
+3.170.19.13                 api.tmdb.org
+3.171.38.80                 www.themoviedb.org
+3.170.35.80                 api.thetvdb.com
 148.113.196.166             webservice.fanart.tv
 149.154.166.110             api.telegram.org
-43.135.106.8                qyapi.weixin.qq.com
-54.188.33.22                slack.com
-151.101.128.223             pypi.org
-140.82.112.3                github.com
-140.82.114.10               codeload.github.com
-140.82.113.5                api.github.com
-185.199.110.133             raw.githubusercontent.com
-185.93.1.246                image.tmdb.org
-169.150.236.100             images.tmdb.org
+43.135.106.227              qyapi.weixin.qq.com
+34.225.62.185               slack.com
+151.101.0.223               pypi.org
+140.82.113.3                github.com
+140.82.114.9                codeload.github.com
+140.82.114.5                api.github.com
+185.199.108.133             raw.githubusercontent.com
+185.93.1.244                image.tmdb.org
+185.93.1.251                images.tmdb.org
 
 # IPv6 Hosts
-2600:9000:2464:c200:c:174a:c400:93a1               api.themoviedb.org
-2600:9000:2464:3000:10:fb02:4000:93a1              api.tmdb.org
-2600:9000:2027:c800:e:5373:440:93a1                www.themoviedb.org
+2600:9000:286d:a200:c:174a:c400:93a1               api.themoviedb.org
+2600:9000:286d:4200:10:fb02:4000:93a1              api.tmdb.org
+2600:9000:28a0:3a00:e:5373:440:93a1                www.themoviedb.org
 2001:67c:4e8:f004::9                               api.telegram.org
-2a04:4e42::223                                     pypi.org
-2606:50c0:8003::154                                raw.githubusercontent.com
-2400:52e0:1a00::1070:1                             image.tmdb.org
-2400:52e0:1a00::1069:1                             images.tmdb.org
+2a04:4e42:600::223                                 pypi.org
+2606:50c0:8002::154                                raw.githubusercontent.com
+2400:52e0:1a00::941:1                              image.tmdb.org
+2400:52e0:1a00::1234:1                             images.tmdb.org
 
-# Generated at: 2026-02-12T04:39:24+08:00
+# Generated at: 2026-02-12T05:33:57+08:00
 # Star me: https://github.com/938134/check_hosts
