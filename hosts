@@ -6,24 +6,24 @@
 148.113.196.166             webservice.fanart.tv
 149.154.166.110             api.telegram.org
 43.135.106.8                qyapi.weixin.qq.com
-54.245.50.245               slack.com
-151.101.192.223             pypi.org
+35.81.85.251                slack.com
+151.101.128.223             pypi.org
 140.82.116.3                github.com
 140.82.116.10               codeload.github.com
 140.82.116.6                api.github.com
-185.199.111.133             raw.githubusercontent.com
+185.199.108.133             raw.githubusercontent.com
 143.244.49.180              image.tmdb.org
-143.244.50.83               images.tmdb.org
+169.150.249.168             images.tmdb.org
 
 # IPv6 Hosts
-2600:9000:25f0:3e00:c:174a:c400:93a1               api.themoviedb.org
-2600:9000:201e:b400:10:fb02:4000:93a1              api.tmdb.org
-2600:9000:204d:9c00:e:5373:440:93a1                www.themoviedb.org
+2600:9000:25f0:de00:c:174a:c400:93a1               api.themoviedb.org
+2600:9000:201e:9000:10:fb02:4000:93a1              api.tmdb.org
+2600:9000:204d:f000:e:5373:440:93a1                www.themoviedb.org
 2001:67c:4e8:f004::9                               api.telegram.org
-2a04:4e42:200::223                                 pypi.org
-2606:50c0:8001::154                                raw.githubusercontent.com
-2400:52e0:1a01::852:1                              image.tmdb.org
-2400:52e0:1a01::852:1                              images.tmdb.org
+2a04:4e42:600::223                                 pypi.org
+2606:50c0:8000::154                                raw.githubusercontent.com
+2400:52e0:1a01::994:1                              image.tmdb.org
+2400:52e0:1a01::1115:1                             images.tmdb.org
 
-# Generated at: 2026-06-04T02:43:35+08:00
+# Generated at: 2026-06-04T05:49:04+08:00
 # Star me: https://github.com/938134/check_hosts
