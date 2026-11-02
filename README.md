@@ -17,39 +17,39 @@
 #### 2.1.1 IPv4地址复制下面的内容
 
 ```bash
-52.84.158.120               api.themoviedb.org
-143.204.160.10              api.tmdb.org
-18.238.238.75               www.themoviedb.org
-52.85.138.81                api.thetvdb.com
+52.85.132.26                api.themoviedb.org
+18.155.173.53               api.tmdb.org
+18.155.173.111              www.themoviedb.org
+65.8.197.76                 api.thetvdb.com
 148.113.196.166             webservice.fanart.tv
 149.154.166.110             api.telegram.org
 43.135.106.8                qyapi.weixin.qq.com
-52.89.90.67                 slack.com
-151.101.192.223             pypi.org
-20.29.134.23                github.com
-20.29.134.24                codeload.github.com
-20.29.134.17                api.github.com
-185.199.111.133             raw.githubusercontent.com
-143.244.50.86               image.tmdb.org
-143.244.50.82               images.tmdb.org
+54.245.50.245               slack.com
+151.101.128.223             pypi.org
+140.82.112.4                github.com
+140.82.112.9                codeload.github.com
+140.82.113.6                api.github.com
+185.199.109.133             raw.githubusercontent.com
+143.244.50.212              image.tmdb.org
+143.244.50.89               images.tmdb.org
 ```
 
-该内容会自动定时更新， 数据更新时间：2026-11-02T04:15:02+08:00
+该内容会自动定时更新， 数据更新时间：2026-11-02T08:18:22+08:00
 
 #### 2.1.2 IPv6地址复制下面的内容
 
 ```bash
-2600:9000:20be:8600:c:174a:c400:93a1               api.themoviedb.org
-2600:9000:20ef:da00:10:fb02:4000:93a1              api.tmdb.org
-2600:9000:2784:3200:e:5373:440:93a1                www.themoviedb.org
+2600:9000:2073:e000:c:174a:c400:93a1               api.themoviedb.org
+2600:9000:246b:d200:10:fb02:4000:93a1              api.tmdb.org
+2600:9000:246b:6000:e:5373:440:93a1                www.themoviedb.org
 2001:67c:4e8:f004::9                               api.telegram.org
-2a04:4e42:400::223                                 pypi.org
+2a04:4e42:600::223                                 pypi.org
 2606:50c0:8002::154                                raw.githubusercontent.com
-2400:52e0:1a01::954:1                              image.tmdb.org
-2400:52e0:1a01::907:1                              images.tmdb.org
+2400:52e0:1a01::953:1                              image.tmdb.org
+2400:52e0:1a01::987:1                              images.tmdb.org
 ```
 
-该内容会自动定时更新， 数据更新时间：2026-11-02T04:15:02+08:00
+该内容会自动定时更新， 数据更新时间：2026-11-02T08:18:22+08:00
 
 > [!NOTE]
 > 由于项目搭建在Github Aciton，延时数据获取于Github Action 虚拟主机网络环境，请自行测试可用性，建议使用本地网络环境自动设置。
